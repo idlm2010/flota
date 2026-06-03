@@ -7,135 +7,112 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0f0f0f;
-  --bg2: #161616;
-  --bg3: #1e1e1e;
-  --bg4: #272727;
-  --border: #2e2e2e;
-  --border2: #3a3a3a;
-  --text: #f0ede8;
-  --text2: #9a9490;
-  --text3: #5a5755;
-  --accent: #e8c547;
-  --accent2: #f5d96b;
-  --accent-bg: rgba(232,197,71,0.08);
-  --red: #e85447;
-  --green: #4caf7d;
-  --blue: #5b9bd5;
-  --orange: #e8904a;
-  --radius: 10px;
-  --radius-lg: 16px;
+  --bg: #0f0f0f; --bg2: #161616; --bg3: #1e1e1e; --bg4: #272727;
+  --border: #2e2e2e; --border2: #3a3a3a;
+  --text: #f0ede8; --text2: #9a9490; --text3: #5a5755;
+  --accent: #e8c547; --accent2: #f5d96b; --accent-bg: rgba(232,197,71,0.08);
+  --red: #e85447; --green: #4caf7d; --blue: #5b9bd5; --orange: #e8904a;
+  --radius: 10px; --radius-lg: 16px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  font-size: 14px;
-  line-height: 1.6;
-}
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.6; }
 h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
+
+/* LOGIN SCREEN */
+#login-screen {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  background: var(--bg);
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+#login-screen.visible { display: flex; }
+.login-box {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 20px; width: 100%; max-width: 400px; padding: 36px 32px;
+}
+.login-box .logo { font-family: 'Syne'; font-size: 22px; color: var(--accent); margin-bottom: 4px; }
+.login-box .logo-sub { font-size: 12px; color: var(--text3); margin-bottom: 28px; }
+.login-tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--bg3); border-radius: 8px; padding: 3px; }
+.login-tab { flex: 1; padding: 7px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--text2); border: none; background: none; font-family: 'DM Sans'; transition: all 0.15s; }
+.login-tab.active { background: var(--bg4); color: var(--text); }
+.login-section { display: none; }
+.login-section.active { display: block; }
+.login-msg { font-size: 12px; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; display: none; }
+.login-msg.error { background: rgba(232,84,71,0.12); color: var(--red); display: block; }
+.login-msg.ok { background: rgba(76,175,125,0.12); color: var(--green); display: block; }
+.login-footer { margin-top: 16px; text-align: center; font-size: 12px; color: var(--text3); }
+.login-footer a { color: var(--accent); cursor: pointer; text-decoration: none; }
+.login-footer a:hover { text-decoration: underline; }
+.drive-status { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--bg3); border-radius: 8px; margin-bottom: 16px; font-size: 12px; color: var(--text2); }
+.drive-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+.drive-dot.ok { background: var(--green); }
 
 /* NAV */
 #topbar {
   position: sticky; top: 0; z-index: 100;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 16px;
-  padding: 0 20px; height: 56px;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px; padding: 0 20px; height: 56px;
 }
-#topbar h1 { font-size: 18px; color: var(--accent); letter-spacing: -0.5px; flex-shrink:0; }
+#topbar h1 { font-size: 18px; color: var(--accent); letter-spacing: -0.5px; flex-shrink: 0; }
 #topbar .tagline { font-size: 11px; color: var(--text3); font-style: italic; }
-#topbar .spacer { flex:1; }
-#google-btn {
-  background: var(--bg3); border: 1px solid var(--border2);
-  color: var(--text); padding: 7px 16px; border-radius: 8px;
-  cursor: pointer; font-family: 'DM Sans'; font-size: 13px;
+#topbar .spacer { flex: 1; }
+.user-chip {
   display: flex; align-items: center; gap: 8px;
-  transition: border-color 0.2s, background 0.2s;
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 8px; padding: 5px 12px; cursor: pointer;
+  font-size: 13px; transition: border-color 0.15s;
 }
-#google-btn:hover { border-color: var(--accent); background: var(--accent-bg); }
-#google-btn .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex-shrink:0; }
-#google-btn.connected .dot { background: var(--green); }
+.user-chip:hover { border-color: var(--accent); }
+.user-chip .uc-avatar {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent); color: #0f0f0f;
+  font-family: 'Syne'; font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.user-dropdown {
+  display: none; position: absolute; top: 50px; right: 12px;
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 10px; min-width: 180px; z-index: 200;
+  overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.user-dropdown.open { display: block; }
+.ud-item {
+  padding: 10px 16px; cursor: pointer; font-size: 13px; color: var(--text2);
+  transition: background 0.1s; display: flex; align-items: center; gap: 8px;
+}
+.ud-item:hover { background: var(--bg3); color: var(--text); }
+.ud-item.danger:hover { color: var(--red); }
+.ud-sep { border-top: 1px solid var(--border); }
 
 /* LAYOUT */
 #app { display: flex; height: calc(100vh - 56px); }
-#sidebar {
-  width: 240px; flex-shrink: 0;
-  background: var(--bg2);
-  border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  overflow-y: auto;
-}
+#sidebar { width: 240px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
 #main { flex: 1; overflow-y: auto; }
 
 /* SIDEBAR */
 .sidebar-section { padding: 16px 12px 8px; }
-.sidebar-section .label {
-  font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
-  color: var(--text3); text-transform: uppercase; margin-bottom: 6px;
-}
-.nav-btn {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 12px; border-radius: 8px;
-  cursor: pointer; width: 100%; text-align: left;
-  background: none; border: none; color: var(--text2);
-  font-family: 'DM Sans'; font-size: 13px;
-  transition: background 0.15s, color 0.15s;
-}
+.sidebar-section .label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; color: var(--text3); text-transform: uppercase; margin-bottom: 6px; }
+.nav-btn { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; cursor: pointer; width: 100%; text-align: left; background: none; border: none; color: var(--text2); font-family: 'DM Sans'; font-size: 13px; transition: background 0.15s, color 0.15s; }
 .nav-btn:hover { background: var(--bg3); color: var(--text); }
 .nav-btn.active { background: var(--accent-bg); color: var(--accent); }
 .nav-btn .icon { font-size: 15px; width: 20px; text-align: center; }
-
-.vehicle-card {
-  margin: 4px 12px;
-  padding: 10px 12px;
-  background: var(--bg3); border-radius: 8px;
-  cursor: pointer; border: 1px solid transparent;
-  transition: border-color 0.15s;
-}
+.vehicle-card { margin: 4px 12px; padding: 10px 12px; background: var(--bg3); border-radius: 8px; cursor: pointer; border: 1px solid transparent; transition: border-color 0.15s; }
 .vehicle-card:hover { border-color: var(--border2); }
 .vehicle-card.active { border-color: var(--accent); background: var(--accent-bg); }
 .vehicle-card .vc-name { font-size: 13px; font-weight: 500; color: var(--text); }
-.vehicle-card .vc-plate {
-  font-size: 11px; color: var(--text3);
-  font-family: 'Syne'; letter-spacing: 1px;
-}
-.vehicle-card .vc-status {
-  display: inline-block; font-size: 10px; padding: 2px 7px;
-  border-radius: 20px; margin-top: 4px; font-weight: 500;
-}
+.vehicle-card .vc-plate { font-size: 11px; color: var(--text3); font-family: 'Syne'; letter-spacing: 1px; }
+.vehicle-card .vc-status { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 20px; margin-top: 4px; font-weight: 500; }
 .vc-status.activo { background: rgba(76,175,125,0.15); color: var(--green); }
 .vc-status.vendido { background: rgba(232,84,71,0.15); color: var(--red); }
-
-.sidebar-add-btn {
-  margin: 8px 12px 16px;
-  width: calc(100% - 24px);
-  padding: 9px; border-radius: 8px;
-  background: var(--accent); color: #0f0f0f;
-  border: none; cursor: pointer;
-  font-family: 'Syne'; font-size: 13px; font-weight: 700;
-  transition: background 0.15s;
-}
+.sidebar-add-btn { margin: 8px 12px 16px; width: calc(100% - 24px); padding: 9px; border-radius: 8px; background: var(--accent); color: #0f0f0f; border: none; cursor: pointer; font-family: 'Syne'; font-size: 13px; font-weight: 700; transition: background 0.15s; }
 .sidebar-add-btn:hover { background: var(--accent2); }
 
-/* MAIN CONTENT */
-.page-header {
-  padding: 28px 28px 20px;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
-}
+/* MAIN */
+.page-header { padding: 28px 28px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .page-header h2 { font-size: 22px; }
 .page-header .subtitle { color: var(--text2); font-size: 13px; margin-top: 2px; }
-.btn {
-  padding: 8px 18px; border-radius: 8px;
-  cursor: pointer; font-family: 'DM Sans'; font-size: 13px;
-  border: 1px solid var(--border2); background: var(--bg3); color: var(--text);
-  transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
-  white-space: nowrap;
-}
-.btn:hover { border-color: var(--border2); background: var(--bg4); }
+.btn { padding: 8px 18px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans'; font-size: 13px; border: 1px solid var(--border2); background: var(--bg3); color: var(--text); transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.btn:hover { background: var(--bg4); }
 .btn.primary { background: var(--accent); color: #0f0f0f; border-color: var(--accent); font-weight: 600; }
 .btn.primary:hover { background: var(--accent2); border-color: var(--accent2); }
 .btn.danger { color: var(--red); border-color: rgba(232,84,71,0.3); }
@@ -144,75 +121,33 @@ h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
 
 /* SECTIONS */
 .content-body { padding: 24px 28px; }
-.section-block {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  margin-bottom: 20px;
-  overflow: hidden;
-}
-.section-block .sb-header {
-  padding: 14px 20px;
-  display: flex; align-items: center; justify-content: space-between;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg3);
-}
+.section-block { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 20px; overflow: hidden; }
+.section-block .sb-header { padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); background: var(--bg3); }
 .sb-header h3 { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .sb-header .sb-icon { color: var(--accent); }
 .sb-body { padding: 20px; }
-
-/* GRIDS INFO */
-.info-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
-}
+.info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
 .info-item .lbl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px; }
 .info-item .val { font-size: 14px; color: var(--text); }
 .info-item .val.mono { font-family: 'Syne'; letter-spacing: 1px; font-size: 15px; color: var(--accent); }
-
-/* HISTORY TABLE */
 .hist-table { width: 100%; border-collapse: collapse; }
-.hist-table th {
-  text-align: left; font-size: 11px; text-transform: uppercase;
-  letter-spacing: 0.8px; color: var(--text3); padding: 0 12px 10px 0;
-  font-weight: 500;
-}
+.hist-table th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); padding: 0 12px 10px 0; font-weight: 500; }
 .hist-table td { padding: 10px 12px 10px 0; border-top: 1px solid var(--border); font-size: 13px; vertical-align: top; }
 .hist-table tr:first-child td { border-top: none; }
 .hist-table .amount { font-family: 'Syne'; color: var(--accent); }
 .hist-table .date { color: var(--text2); font-size: 12px; }
 .hist-table .desc { color: var(--text2); font-size: 12px; }
-.hist-table .expand-row td { background: var(--bg3); border-radius: var(--radius); }
-
-/* BADGES */
-.badge {
-  display: inline-flex; align-items: center;
-  font-size: 11px; padding: 3px 10px; border-radius: 20px;
-  font-weight: 500; white-space: nowrap;
-}
+.badge { display: inline-flex; align-items: center; font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
 .badge.info { background: rgba(91,155,213,0.15); color: var(--blue); }
 .badge.warn { background: rgba(232,144,74,0.15); color: var(--orange); }
 .badge.ok { background: rgba(76,175,125,0.15); color: var(--green); }
 .badge.danger { background: rgba(232,84,71,0.15); color: var(--red); }
 
 /* MODAL */
-#modal-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.7); z-index: 500;
-  align-items: flex-start; justify-content: center;
-  padding: 40px 16px; overflow-y: auto;
-}
+#modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; }
 #modal-overlay.open { display: flex; }
-.modal {
-  background: var(--bg2); border: 1px solid var(--border2);
-  border-radius: var(--radius-lg); width: 100%; max-width: 620px;
-  flex-shrink: 0;
-}
-.modal-header {
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-}
+.modal { background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius-lg); width: 100%; max-width: 620px; flex-shrink: 0; }
+.modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
 .modal-header h3 { font-size: 18px; }
 .modal-close { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 20px; line-height: 1; padding: 0; }
 .modal-close:hover { color: var(--text); }
@@ -225,25 +160,12 @@ h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
 .form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
 .form-group { display: flex; flex-direction: column; gap: 5px; }
 .form-group label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); font-weight: 500; }
-.form-group input, .form-group select, .form-group textarea {
-  background: var(--bg3); border: 1px solid var(--border2);
-  color: var(--text); padding: 9px 12px; border-radius: 8px;
-  font-family: 'DM Sans'; font-size: 13px;
-  transition: border-color 0.15s;
-}
-.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-  outline: none; border-color: var(--accent);
-}
+.form-group input, .form-group select, .form-group textarea { background: var(--bg3); border: 1px solid var(--border2); color: var(--text); padding: 9px 12px; border-radius: 8px; font-family: 'DM Sans'; font-size: 13px; transition: border-color 0.15s; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); }
 .form-group textarea { resize: vertical; min-height: 70px; }
 .form-group select option { background: var(--bg3); }
 .form-sep { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
-
-/* SUBDETAILS in taller */
-.sub-items { margin-top: 12px; }
-.sub-item {
-  display: grid; grid-template-columns: 1fr 80px 100px 32px;
-  gap: 8px; align-items: center; margin-bottom: 8px;
-}
+.sub-item { display: grid; grid-template-columns: 1fr 80px 100px 32px; gap: 8px; align-items: center; margin-bottom: 8px; }
 .sub-item input { width: 100%; }
 .sub-item-header { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; display: grid; grid-template-columns: 1fr 80px 100px 32px; gap: 8px; }
 .add-sub-btn { background: none; border: 1px dashed var(--border2); color: var(--text3); padding: 7px; border-radius: 6px; cursor: pointer; font-size: 12px; width: 100%; transition: all 0.15s; }
@@ -251,21 +173,10 @@ h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
 .del-btn { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; line-height: 1; padding: 0; }
 .del-btn:hover { color: var(--red); }
 
-/* SEARCH PAGE */
-.search-box {
-  display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;
-}
-.search-box input { flex:1; min-width: 200px; }
+/* SEARCH */
 .search-results { display: flex; flex-direction: column; gap: 12px; }
-.result-card {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); overflow: hidden;
-}
-.result-card .rc-header {
-  padding: 12px 20px; background: var(--bg3);
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-}
+.result-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.result-card .rc-header { padding: 12px 20px; background: var(--bg3); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .rc-header .rc-concept { font-weight: 600; font-size: 15px; color: var(--accent); }
 .rc-body { padding: 16px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
 
@@ -274,25 +185,22 @@ h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
 .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; }
 .stat-card .sc-val { font-family: 'Syne'; font-size: 26px; color: var(--accent); font-weight: 700; }
 .stat-card .sc-lbl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-top: 4px; }
-
-/* WELCOME */
-#welcome-screen {
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  min-height: calc(100vh - 56px); text-align: center; padding: 40px 20px;
-}
-#welcome-screen h2 { font-size: 32px; margin-bottom: 10px; }
-#welcome-screen p { color: var(--text2); max-width: 420px; line-height: 1.7; margin-bottom: 24px; }
-
-/* ITV warning */
 .itv-warning { background: rgba(232,144,74,0.08); border: 1px solid rgba(232,144,74,0.25); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--orange); margin-bottom: 12px; }
-
-/* Empty states */
 .empty { text-align: center; padding: 40px 20px; color: var(--text3); }
 .empty .em-icon { font-size: 32px; margin-bottom: 12px; }
 .empty p { font-size: 13px; }
 
-/* responsive */
+/* INVITE CODE */
+.invite-code-box { background: var(--bg3); border: 1px dashed var(--accent); border-radius: 10px; padding: 16px 20px; margin: 12px 0; text-align: center; }
+.invite-code-box .code { font-family: 'Syne'; font-size: 22px; color: var(--accent); letter-spacing: 4px; margin: 6px 0; }
+.invite-code-box .exp { font-size: 11px; color: var(--text3); }
+
+/* LOADING */
+#loading-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; flex-direction: column; gap: 14px; }
+#loading-overlay.visible { display: flex; }
+.spinner { width: 36px; height: 36px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
 @media (max-width: 640px) {
   #sidebar { width: 200px; }
   .form-row.cols-2, .form-row.cols-3 { grid-template-columns: 1fr; }
@@ -307,38 +215,117 @@ h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
 </head>
 <body>
 
-<div id="topbar">
+<!-- LOADING -->
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <div style="font-size:13px;color:var(--text2)" id="loading-msg">Conectando con Google Drive…</div>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="visible">
+  <div class="login-box">
+    <div class="logo">⚙ FlotaControl</div>
+    <div class="logo-sub">gestión de vehículos</div>
+
+    <div id="drive-status-box" class="drive-status">
+      <span class="drive-dot" id="drive-dot"></span>
+      <span id="drive-status-txt">Conectando con Google Drive…</span>
+    </div>
+
+    <div class="login-tabs">
+      <button class="login-tab active" onclick="switchTab('login')">Iniciar sesión</button>
+      <button class="login-tab" onclick="switchTab('register')">Registrarse</button>
+      <button class="login-tab" onclick="switchTab('recover')">Recuperar</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="login-section active" id="tab-login">
+      <div class="login-msg" id="login-msg"></div>
+      <div class="form-row"><div class="form-group">
+        <label>Usuario</label>
+        <input id="l-user" placeholder="tu_usuario" autocomplete="username">
+      </div></div>
+      <div class="form-row"><div class="form-group">
+        <label>Contraseña</label>
+        <input id="l-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div></div>
+      <button class="btn primary" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">Entrar</button>
+      <div class="login-footer" style="margin-top:10px">
+        <label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+          <input type="checkbox" id="l-remember" style="accent-color:var(--accent)"> Recordar sesión
+        </label>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="login-section" id="tab-register">
+      <div class="login-msg" id="reg-msg"></div>
+      <div class="form-row"><div class="form-group">
+        <label>Código de invitación</label>
+        <input id="r-invite" placeholder="XXXXXX" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+      </div></div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label>Nombre completo</label><input id="r-nombre" placeholder="Juan García"></div>
+        <div class="form-group"><label>Usuario *</label><input id="r-user" placeholder="juangarcia" autocomplete="username"></div>
+      </div>
+      <div class="form-row"><div class="form-group">
+        <label>Email</label><input id="r-email" type="email" placeholder="juan@email.com">
+      </div></div>
+      <div class="form-row cols-2">
+        <div class="form-group"><label>Contraseña</label><input id="r-pass" type="password" autocomplete="new-password"></div>
+        <div class="form-group"><label>Repetir contraseña</label><input id="r-pass2" type="password" autocomplete="new-password"></div>
+      </div>
+      <button class="btn primary" style="width:100%;justify-content:center;margin-top:4px" onclick="doRegister()">Crear cuenta</button>
+    </div>
+
+    <!-- RECOVER -->
+    <div class="login-section" id="tab-recover">
+      <div class="login-msg" id="rec-msg"></div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Introduce tu usuario o email y te mostraremos la información para que el administrador te ayude a recuperar el acceso.</p>
+      <div class="form-row"><div class="form-group">
+        <label>Usuario o email</label>
+        <input id="rec-input" placeholder="usuario o email">
+      </div></div>
+      <button class="btn primary" style="width:100%;justify-content:center;margin-top:4px" onclick="doRecover()">Buscar cuenta</button>
+    </div>
+
+    <div class="login-footer" style="margin-top:18px">
+      <span id="drive-cfg-link" style="display:none"><a onclick="showClientIdDialog()">⚙ Configurar Google Drive</a></span>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="topbar" style="display:none">
   <h1>⚙ FlotaControl</h1>
   <span class="tagline">gestión de vehículos</span>
   <div class="spacer"></div>
-  <button id="google-btn" onclick="handleAuth()">
-    <span class="dot"></span>
-    <span id="auth-label">Conectar Google Drive</span>
-  </button>
-  <button id="reset-btn" title="Cambiar Client ID o desconectar" onclick="resetClientId()"
-    style="background:none;border:1px solid var(--border);color:var(--text3);cursor:pointer;font-size:11px;padding:5px 9px;border-radius:6px;display:none;font-family:'DM Sans'">⚙ Config</button>
+  <div style="position:relative">
+    <div class="user-chip" onclick="toggleUserMenu()" id="user-chip">
+      <div class="uc-avatar" id="uc-avatar">?</div>
+      <span id="uc-name">—</span>
+    </div>
+    <div class="user-dropdown" id="user-dropdown">
+      <div class="ud-item" onclick="openModal('perfil');closeUserMenu()">✎ &nbsp;Mi perfil</div>
+      <div class="ud-item" id="ud-admin" style="display:none" onclick="openModal('admin');closeUserMenu()">◈ &nbsp;Administración</div>
+      <div class="ud-item ud-sep danger" onclick="doLogout()">↩ &nbsp;Cerrar sesión</div>
+    </div>
+  </div>
 </div>
 
-<div id="app">
+<div id="app" style="display:none">
   <nav id="sidebar">
     <div class="sidebar-section">
       <div class="label">General</div>
-      <button class="nav-btn active" onclick="showPage('dashboard')" id="nav-dashboard">
-        <span class="icon">◈</span> Panel general
-      </button>
-      <button class="nav-btn" onclick="showPage('buscar')" id="nav-buscar">
-        <span class="icon">◎</span> Buscar en taller
-      </button>
+      <button class="nav-btn active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="icon">◈</span> Panel general</button>
+      <button class="nav-btn" onclick="showPage('buscar')" id="nav-buscar"><span class="icon">◎</span> Buscar en taller</button>
     </div>
-    <div class="sidebar-section">
-      <div class="label">Vehículos</div>
-    </div>
+    <div class="sidebar-section"><div class="label">Mis vehículos</div></div>
     <div id="vehicle-list"></div>
     <div style="padding: 0 12px 16px;">
       <button class="sidebar-add-btn" onclick="openModal('vehiculo')">+ Añadir vehículo</button>
     </div>
   </nav>
-
   <main id="main">
     <div id="page-dashboard"></div>
     <div id="page-vehiculo" style="display:none"></div>
@@ -356,199 +343,380 @@ h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
     <div class="modal-body" id="modal-body"></div>
     <div class="modal-footer" id="modal-footer">
       <button class="btn" onclick="closeModal()">Cancelar</button>
-      <button class="btn primary" onclick="saveModal()">Guardar</button>
+      <button class="btn primary" id="modal-save-btn" onclick="saveModal()">Guardar</button>
     </div>
   </div>
 </div>
 
 <script>
 // ================================================================
-// DATA LAYER
+// CONFIG & STATE
 // ================================================================
-const CLIENT_ID = localStorage.getItem('gc_client_id') || '';
-const SCOPES = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file';
-const FILE_NAME = 'flota_vehiculos_v1.json';
+const FILE_NAME = 'flota_data_v2.json';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const ADMIN_USER = 'idlm2010';
 
 let tokenClient = null;
 let accessToken = null;
 let driveFileId = null;
-let data = { vehicles: [] };
+let driveReady = false;
+
+// Master data (todo en Drive)
+let DB = {
+  users: [],        // {id, username, nombre, email, passHash, fechaAlta, role}
+  invitations: [],  // {code, createdBy, createdAt, usedBy, usedAt, expiresAt}
+  logs: [],         // {userId, username, ts, action}
+  vehicles: []      // {id, userId, ...todos los campos existentes}
+};
+
+// Session
+let currentUser = null;
 let currentVehicleId = null;
 let modalType = null;
 let editId = null;
 let subItems = [];
 
+// ================================================================
+// UTILS
+// ================================================================
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 function fmt(v) { return v !== undefined && v !== null && v !== '' ? v : '—'; }
-function fmtDate(d) { if (!d) return '—'; try { return new Date(d + 'T12:00:00').toLocaleDateString('es-ES'); } catch(e){ return d; } }
-function fmtMoney(v) { if (!v && v !== 0) return '—'; return Number(v).toLocaleString('es-ES', {style:'currency',currency:'EUR'}); }
-function fmtKm(v) { if (!v && v !== 0) return '—'; return Number(v).toLocaleString('es-ES') + ' km'; }
+function fmtDate(d) { if (!d) return '—'; try { return new Date(d+'T12:00:00').toLocaleDateString('es-ES'); } catch(e){ return d; } }
+function fmtMoney(v) { if (!v && v!==0) return '—'; return Number(v).toLocaleString('es-ES',{style:'currency',currency:'EUR'}); }
+function fmtKm(v) { if (!v && v!==0) return '—'; return Number(v).toLocaleString('es-ES')+' km'; }
+function today() { return new Date().toISOString().slice(0,10); }
+function tsNow() { return new Date().toISOString(); }
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function showLoading(msg) {
+  document.getElementById('loading-msg').textContent = msg || 'Cargando…';
+  document.getElementById('loading-overlay').classList.add('visible');
+}
+function hideLoading() { document.getElementById('loading-overlay').classList.remove('visible'); }
+
+function myVehicles() {
+  if (!currentUser) return [];
+  return (DB.vehicles || []).filter(v => v.userId === currentUser.id);
+}
 
 // ================================================================
-// GOOGLE AUTH
+// GOOGLE DRIVE AUTH
 // ================================================================
 function initGapi() {
   const cid = localStorage.getItem('gc_client_id');
-  if (!cid) return;
+  if (!cid) {
+    setDriveStatus(false, 'Sin configurar — haz clic en "Configurar Google Drive"');
+    document.getElementById('drive-cfg-link').style.display = 'block';
+    return;
+  }
   try {
     tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: cid,
-      scope: SCOPES,
-      ux_mode: 'popup',
+      client_id: cid, scope: SCOPES, ux_mode: 'popup',
       callback: async (resp) => {
         if (resp.error) {
-          console.error('OAuth error:', resp);
-          alert('Error de autenticación: ' + (resp.error_description || resp.error) +
-            '\n\nAsegúrate de que en Google Cloud Console:\n' +
-            '1. La API de Google Drive está activada\n' +
-            '2. En "Orígenes JS autorizados" has añadido: ' + location.origin + '\n' +
-            '3. La pantalla de consentimiento OAuth está configurada');
+          setDriveStatus(false, 'Error de autenticación: ' + resp.error);
+          hideLoading();
           return;
         }
         accessToken = resp.access_token;
         localStorage.setItem('gc_token_exp', Date.now() + 3500000);
-        document.getElementById('google-btn').classList.add('connected');
-        document.getElementById('auth-label').textContent = 'Drive conectado ✓';
-        await loadData();
+        await loadDB();
       }
     });
+    setDriveStatus(false, 'Conectando…');
+    // Auto-connect
+    const exp = localStorage.getItem('gc_token_exp');
+    if (exp && Date.now() < Number(exp)) {
+      tokenClient.requestAccessToken({ prompt: '' });
+    } else {
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+    }
   } catch(e) {
-    console.error('initTokenClient error:', e);
+    setDriveStatus(false, 'Error iniciando Google Auth');
   }
 }
 
-function handleAuth() {
-  if (accessToken) {
-    saveData().then(() => {
-      const lbl = document.getElementById('auth-label');
-      lbl.textContent = '¡Guardado!';
-      setTimeout(() => lbl.textContent = 'Drive conectado ✓', 1500);
-    });
-    return;
-  }
-  const cid = localStorage.getItem('gc_client_id');
-  if (!cid) {
-    showClientIdDialog();
-    return;
-  }
-  if (!tokenClient) { initGapi(); }
-  if (!tokenClient) { alert('Error cargando Google Identity Services. Recarga la página.'); return; }
-  tokenClient.requestAccessToken({ prompt: 'consent' });
+function setDriveStatus(ok, msg) {
+  driveReady = ok;
+  document.getElementById('drive-dot').className = 'drive-dot' + (ok ? ' ok' : '');
+  document.getElementById('drive-status-txt').textContent = msg;
 }
 
 function showClientIdDialog() {
   const origin = location.origin;
-  const msg = `Para conectar con Google Drive necesitas un Client ID OAuth 2.0.
-
-Pasos (5 minutos, gratis):
-1. Ve a: https://console.cloud.google.com
-2. Crea un proyecto → "APIs y servicios" → "Biblioteca"
-   → Activa "Google Drive API"
-3. "Credenciales" → "Crear credenciales" → "ID cliente OAuth 2.0"
-   → Tipo: Aplicación web
-   → Origen JS autorizado: ${origin}
-4. Copia el Client ID (termina en .apps.googleusercontent.com)
-5. También configura la "Pantalla de consentimiento OAuth"
-   → Tipo: Externo → añade tu email como usuario de prueba
-
-Pega aquí tu Client ID:`;
-  const id = prompt(msg);
+  const id = prompt(`Pega tu Google OAuth 2.0 Client ID:\n(Origen autorizado en Google Cloud: ${origin})`);
   if (!id) return;
-  if (!id.trim().includes('.apps.googleusercontent.com')) {
-    alert('El Client ID no parece válido. Debe terminar en .apps.googleusercontent.com');
-    return;
-  }
+  if (!id.trim().includes('.apps.googleusercontent.com')) { alert('Client ID no válido'); return; }
   localStorage.setItem('gc_client_id', id.trim());
   location.reload();
 }
 
-async function driveRequest(method, url, body, contentType) {
+// ================================================================
+// DRIVE OPERATIONS
+// ================================================================
+async function driveReq(method, url, body, ct) {
   const res = await fetch(url, {
     method,
-    headers: {
-      'Authorization': 'Bearer ' + accessToken,
-      ...(contentType ? { 'Content-Type': contentType } : {})
-    },
-    body: body ? (typeof body === 'string' ? body : JSON.stringify(body)) : undefined
+    headers: { 'Authorization': 'Bearer '+accessToken, ...(ct?{'Content-Type':ct}:{}) },
+    body: body ? (typeof body==='string'?body:JSON.stringify(body)) : undefined
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
-async function findOrCreateFile() {
-  const list = await driveRequest('GET',
-    `https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name='${FILE_NAME}'&fields=files(id,name)`);
-  if (list.files && list.files.length > 0) {
-    driveFileId = list.files[0].id;
-    return true;
-  }
+async function findFile() {
+  const list = await driveReq('GET',
+    `https://www.googleapis.com/drive/v3/files?q=name='${FILE_NAME}' and trashed=false&fields=files(id,name)&spaces=drive`);
+  if (list.files && list.files.length > 0) { driveFileId = list.files[0].id; return true; }
   return false;
 }
 
-async function loadData() {
+async function loadDB() {
+  showLoading('Cargando datos…');
   try {
-    const found = await findOrCreateFile();
+    const found = await findFile();
     if (found) {
-      const content = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
-        headers: { 'Authorization': 'Bearer ' + accessToken }
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
+        headers: { 'Authorization': 'Bearer '+accessToken }
       });
-      data = await content.json();
+      const raw = await res.json();
+      // Migrate from old format if needed
+      DB = migrateData(raw);
     } else {
-      data = { vehicles: [] };
-      await saveData();
+      DB = makeDefaultDB();
+      await saveDB();
     }
-    renderAll();
+    setDriveStatus(true, 'Google Drive conectado ✓');
+    hideLoading();
+    // Try auto-login
+    tryAutoLogin();
   } catch(e) {
-    alert('Error cargando datos: ' + e.message);
-    data = { vehicles: [] };
-    renderAll();
+    setDriveStatus(false, 'Error: '+e.message);
+    hideLoading();
   }
 }
 
-async function saveData() {
+function migrateData(raw) {
+  // If old format (has vehicles at root without userId), migrate
+  if (raw.vehicles && !raw.users) {
+    const adminId = uid();
+    const newDB = makeDefaultDB();
+    newDB.users.push({
+      id: adminId, username: 'idlm2010', nombre: 'Administrador',
+      email: 'idlm2010@gmail.com', passHash: '', // Will be set on first login
+      fechaAlta: today(), role: 'admin', needsPassReset: true
+    });
+    // Associate all existing vehicles to admin
+    newDB.vehicles = (raw.vehicles || []).map(v => ({...v, userId: adminId}));
+    return newDB;
+  }
+  // Ensure all required arrays exist
+  return {
+    users: raw.users || [],
+    invitations: raw.invitations || [],
+    logs: raw.logs || [],
+    vehicles: raw.vehicles || []
+  };
+}
+
+function makeDefaultDB() {
+  return { users: [], invitations: [], logs: [], vehicles: [] };
+}
+
+async function saveDB() {
   if (!accessToken) return;
-  const jsonStr = JSON.stringify(data);
+  const json = JSON.stringify(DB, null, 2);
   try {
     if (driveFileId) {
       await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
         method: 'PATCH',
-        headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-        body: jsonStr
+        headers: { 'Authorization': 'Bearer '+accessToken, 'Content-Type': 'application/json' },
+        body: json
       });
     } else {
-      const meta = await driveRequest('POST',
-        'https://www.googleapis.com/drive/v3/files?fields=id',
-        { name: FILE_NAME, parents: ['appDataFolder'] },
-        'application/json');
+      const meta = await driveReq('POST', 'https://www.googleapis.com/drive/v3/files?fields=id',
+        { name: FILE_NAME }, 'application/json');
       driveFileId = meta.id;
       await fetch(`https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=media`, {
         method: 'PATCH',
-        headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-        body: jsonStr
+        headers: { 'Authorization': 'Bearer '+accessToken, 'Content-Type': 'application/json' },
+        body: json
       });
     }
-  } catch(e) {
-    console.error('Error guardando:', e);
-  }
+  } catch(e) { console.error('saveDB error:', e); }
 }
+
+// ================================================================
+// AUTH / SESSION
+// ================================================================
+function tryAutoLogin() {
+  const saved = localStorage.getItem('fc_session');
+  if (!saved) return;
+  try {
+    const s = JSON.parse(saved);
+    const user = DB.users.find(u => u.id === s.id && u.username === s.username);
+    if (user) { loginSuccess(user, false); }
+  } catch(e) {}
+}
+
+async function doLogin() {
+  const username = document.getElementById('l-user').value.trim().toLowerCase();
+  const pass = document.getElementById('l-pass').value;
+  const remember = document.getElementById('l-remember').checked;
+  const msg = document.getElementById('login-msg');
+  msg.className = 'login-msg';
+
+  if (!driveReady) { showMsg(msg, 'error', 'Google Drive no está conectado todavía'); return; }
+  if (!username || !pass) { showMsg(msg, 'error', 'Rellena usuario y contraseña'); return; }
+
+  const user = DB.users.find(u => u.username === username);
+  if (!user) { showMsg(msg, 'error', 'Usuario no encontrado'); return; }
+
+  // Special case: migrated user with empty passHash sets their pass on first login
+  if (user.needsPassReset && pass === '1234' && username === 'idlm2010') {
+    const hash = await sha256('1234');
+    user.passHash = hash;
+    user.needsPassReset = false;
+    await saveDB();
+    loginSuccess(user, remember);
+    return;
+  }
+
+  const hash = await sha256(pass);
+  if (hash !== user.passHash) { showMsg(msg, 'error', 'Contraseña incorrecta'); return; }
+
+  loginSuccess(user, remember);
+}
+
+function loginSuccess(user, remember) {
+  currentUser = user;
+  addLog(user.id, user.username, 'login');
+  saveDB();
+  if (remember) {
+    localStorage.setItem('fc_session', JSON.stringify({id: user.id, username: user.username}));
+  }
+  showApp();
+}
+
+async function doRegister() {
+  const code = document.getElementById('r-invite').value.trim().toUpperCase();
+  const nombre = document.getElementById('r-nombre').value.trim();
+  const username = document.getElementById('r-user').value.trim().toLowerCase().replace(/\s/g,'');
+  const email = document.getElementById('r-email').value.trim();
+  const pass = document.getElementById('r-pass').value;
+  const pass2 = document.getElementById('r-pass2').value;
+  const msg = document.getElementById('reg-msg');
+
+  if (!driveReady) { showMsg(msg, 'error', 'Google Drive no está conectado'); return; }
+  if (!code) { showMsg(msg, 'error', 'Introduce el código de invitación'); return; }
+  if (!nombre || !username) { showMsg(msg, 'error', 'Nombre y usuario son obligatorios'); return; }
+  if (pass.length < 4) { showMsg(msg, 'error', 'La contraseña debe tener al menos 4 caracteres'); return; }
+  if (pass !== pass2) { showMsg(msg, 'error', 'Las contraseñas no coinciden'); return; }
+
+  const inv = DB.invitations.find(i => i.code === code && !i.usedBy);
+  if (!inv) { showMsg(msg, 'error', 'Código de invitación no válido o ya usado'); return; }
+  if (inv.expiresAt && new Date(inv.expiresAt) < new Date()) { showMsg(msg, 'error', 'El código ha caducado'); return; }
+
+  if (DB.users.find(u => u.username === username)) { showMsg(msg, 'error', 'Ese nombre de usuario ya está en uso'); return; }
+
+  const hash = await sha256(pass);
+  const newUser = {
+    id: uid(), username, nombre, email,
+    passHash: hash, fechaAlta: today(), role: 'user'
+  };
+  DB.users.push(newUser);
+  inv.usedBy = username;
+  inv.usedAt = tsNow();
+  addLog(newUser.id, username, 'register');
+  await saveDB();
+  showMsg(msg, 'ok', '¡Cuenta creada! Iniciando sesión…');
+  setTimeout(() => loginSuccess(newUser, true), 1000);
+}
+
+function doRecover() {
+  const input = document.getElementById('rec-input').value.trim().toLowerCase();
+  const msg = document.getElementById('rec-msg');
+  if (!driveReady) { showMsg(msg, 'error', 'Google Drive no está conectado'); return; }
+  if (!input) { showMsg(msg, 'error', 'Introduce tu usuario o email'); return; }
+  const user = DB.users.find(u => u.username === input || u.email === input);
+  if (!user) { showMsg(msg, 'error', 'No se encontró ninguna cuenta con ese dato'); return; }
+  showMsg(msg, 'ok', `Cuenta encontrada: ${user.nombre} (${user.username}). Contacta con el administrador (idlm2010@gmail.com) para restablecer tu contraseña.`);
+}
+
+function doLogout() {
+  addLog(currentUser.id, currentUser.username, 'logout');
+  saveDB();
+  currentUser = null;
+  currentVehicleId = null;
+  localStorage.removeItem('fc_session');
+  document.getElementById('topbar').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').classList.add('visible');
+  document.getElementById('l-pass').value = '';
+  document.getElementById('login-msg').className = 'login-msg';
+}
+
+function addLog(userId, username, action) {
+  DB.logs.push({ userId, username, ts: tsNow(), action });
+  if (DB.logs.length > 500) DB.logs = DB.logs.slice(-500);
+}
+
+function showMsg(el, type, text) {
+  el.className = 'login-msg ' + type;
+  el.textContent = text;
+}
+
+// ================================================================
+// APP SHELL
+// ================================================================
+function showApp() {
+  document.getElementById('login-screen').classList.remove('visible');
+  document.getElementById('topbar').style.display = 'flex';
+  document.getElementById('app').style.display = 'flex';
+
+  // User chip
+  const initials = (currentUser.nombre || currentUser.username).slice(0,2).toUpperCase();
+  document.getElementById('uc-avatar').textContent = initials;
+  document.getElementById('uc-name').textContent = currentUser.nombre || currentUser.username;
+
+  // Admin menu
+  const isAdmin = currentUser.role === 'admin' || currentUser.username === ADMIN_USER;
+  document.getElementById('ud-admin').style.display = isAdmin ? 'flex' : 'none';
+
+  renderAll();
+  showPage('dashboard');
+}
+
+function toggleUserMenu() {
+  document.getElementById('user-dropdown').classList.toggle('open');
+}
+function closeUserMenu() {
+  document.getElementById('user-dropdown').classList.remove('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#user-chip') && !e.target.closest('#user-dropdown')) closeUserMenu();
+});
 
 // ================================================================
 // RENDER
 // ================================================================
 function renderAll() {
   renderSidebar();
-  showPage(document.querySelector('.nav-btn.active')?.id.replace('nav-','') || 'dashboard');
 }
 
 function renderSidebar() {
   const vl = document.getElementById('vehicle-list');
   vl.innerHTML = '';
-  (data.vehicles || []).forEach(v => {
+  myVehicles().forEach(v => {
     const div = document.createElement('div');
     div.className = 'vehicle-card' + (v.id === currentVehicleId ? ' active' : '');
     div.innerHTML = `<div class="vc-name">${v.marca} ${v.modelo}</div>
-      <div class="vc-plate">${v.matricula || '—'}</div>
-      <span class="vc-status ${v.vendido ? 'vendido' : 'activo'}">${v.vendido ? 'Vendido' : 'Activo'}</span>`;
+      <div class="vc-plate">${v.matricula||'—'}</div>
+      <span class="vc-status ${v.vendido?'vendido':'activo'}">${v.vendido?'Vendido':'Activo'}</span>`;
     div.onclick = () => { currentVehicleId = v.id; renderAll(); showPage('vehiculo'); };
     vl.appendChild(div);
   });
@@ -557,14 +725,14 @@ function renderSidebar() {
 function showPage(p) {
   document.querySelectorAll('[id^="page-"]').forEach(el => el.style.display = 'none');
   document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-  const nb = document.getElementById('nav-' + p);
+  const nb = document.getElementById('nav-'+p);
   if (nb) nb.classList.add('active');
-  const pg = document.getElementById('page-' + p);
+  const pg = document.getElementById('page-'+p);
   if (!pg) { showPage('dashboard'); return; }
   pg.style.display = '';
-  if (p === 'dashboard') renderDashboard();
-  else if (p === 'vehiculo') renderVehiclePage();
-  else if (p === 'buscar') renderBuscar();
+  if (p==='dashboard') renderDashboard();
+  else if (p==='vehiculo') renderVehiclePage();
+  else if (p==='buscar') renderBuscar();
 }
 
 // ================================================================
@@ -572,55 +740,44 @@ function showPage(p) {
 // ================================================================
 function renderDashboard() {
   const pg = document.getElementById('page-dashboard');
-  const veh = data.vehicles || [];
-  const activos = veh.filter(v => !v.vendido).length;
-  const totalGasto = veh.reduce((s, v) => {
-    return s + (v.talleres || []).reduce((st, t) => st + (Number(t.importe) || 0), 0);
-  }, 0);
-  const totalCompra = veh.reduce((s, v) => s + (Number(v.importeCompra) || 0), 0);
-
-  // ITV próximas (sin fecha de proxima ITV, advertir si la última fue hace más de 2 años)
+  const veh = myVehicles();
+  const activos = veh.filter(v=>!v.vendido).length;
+  const totalGasto = veh.reduce((s,v)=>s+(v.talleres||[]).reduce((st,t)=>st+(Number(t.importe)||0),0),0);
+  const totalCompra = veh.reduce((s,v)=>s+(Number(v.importeCompra)||0),0);
   const now = new Date();
   const itvAlertas = veh.filter(v => {
     if (v.vendido) return false;
-    const itvs = v.itvs || [];
-    if (!itvs.length) return true;
-    const last = itvs.sort((a,b) => new Date(b.fecha) - new Date(a.fecha))[0];
-    const diff = (now - new Date(last.fecha + 'T12:00:00')) / (1000 * 60 * 60 * 24 * 365);
-    return diff > 1.8;
+    const its = v.itvs||[];
+    if (!its.length) return true;
+    const last = its.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+    return (now - new Date(last.fecha+'T12:00:00'))/(1000*60*60*24*365) > 1.8;
   });
 
-  let html = `<div class="page-header"><div><h2>Panel general</h2><div class="subtitle">Resumen de tu flota</div></div></div>
+  let html = `<div class="page-header"><div><h2>Panel general</h2>
+    <div class="subtitle">Bienvenido, ${currentUser.nombre || currentUser.username}</div></div></div>
   <div class="content-body">`;
 
   if (!veh.length) {
-    html += `<div class="empty"><div class="em-icon">🚗</div><p>No hay vehículos registrados.<br>Usa el botón <strong>+ Añadir vehículo</strong> para empezar.</p></div>`;
-    html += `</div>`;
-    pg.innerHTML = html;
-    return;
+    html += `<div class="empty"><div class="em-icon">🚗</div><p>No tienes vehículos registrados.<br>Usa el botón <strong>+ Añadir vehículo</strong>.</p></div></div>`;
+    pg.innerHTML = html; return;
   }
 
   html += `<div class="dash-stats">
-    <div class="stat-card"><div class="sc-val">${activos}</div><div class="sc-lbl">Vehículos activos</div></div>
-    <div class="stat-card"><div class="sc-val">${veh.length}</div><div class="sc-lbl">Total registrados</div></div>
-    <div class="stat-card"><div class="sc-val">${totalGasto.toLocaleString('es-ES', {style:'currency',currency:'EUR'})}</div><div class="sc-lbl">Gasto total taller</div></div>
-    <div class="stat-card"><div class="sc-val">${totalCompra.toLocaleString('es-ES', {style:'currency',currency:'EUR'})}</div><div class="sc-lbl">Inversión total</div></div>
+    <div class="stat-card"><div class="sc-val">${activos}</div><div class="sc-lbl">Activos</div></div>
+    <div class="stat-card"><div class="sc-val">${veh.length}</div><div class="sc-lbl">Total</div></div>
+    <div class="stat-card"><div class="sc-val">${totalGasto.toLocaleString('es-ES',{style:'currency',currency:'EUR'})}</div><div class="sc-lbl">Gasto taller</div></div>
+    <div class="stat-card"><div class="sc-val">${totalCompra.toLocaleString('es-ES',{style:'currency',currency:'EUR'})}</div><div class="sc-lbl">Inversión</div></div>
   </div>`;
 
-  if (itvAlertas.length) {
-    itvAlertas.forEach(v => {
-      const itvs = v.itvs || [];
-      const last = itvs.length ? itvs.sort((a,b) => new Date(b.fecha) - new Date(a.fecha))[0] : null;
-      html += `<div class="itv-warning">⚠ <strong>${v.marca} ${v.modelo}</strong> (${v.matricula || '—'}) — ${last ? 'Última ITV: ' + fmtDate(last.fecha) : 'Sin ITV registrada'}. Revisa si necesita pasar ITV.</div>`;
-    });
-  }
+  itvAlertas.forEach(v => {
+    const last = (v.itvs||[]).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+    html += `<div class="itv-warning">⚠ <strong>${v.marca} ${v.modelo}</strong> (${v.matricula||'—'}) — ${last?'Última ITV: '+fmtDate(last.fecha):'Sin ITV registrada'}. Revisa si necesita ITV.</div>`;
+  });
 
-  html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◈</span> Todos los vehículos</h3></div><div class="sb-body">
-    <table class="hist-table"><thead><tr>
-      <th>Vehículo</th><th>Matrícula</th><th>Tipo</th><th>Compra</th><th>Gasto taller</th><th>Estado</th>
-    </tr></thead><tbody>`;
+  html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◈</span> Vehículos</h3></div><div class="sb-body">
+    <table class="hist-table"><thead><tr><th>Vehículo</th><th>Matrícula</th><th>Tipo</th><th>Compra</th><th>Gasto taller</th><th>Estado</th></tr></thead><tbody>`;
   veh.forEach(v => {
-    const gt = (v.talleres || []).reduce((s,t) => s + (Number(t.importe)||0), 0);
+    const gt = (v.talleres||[]).reduce((s,t)=>s+(Number(t.importe)||0),0);
     html += `<tr style="cursor:pointer" onclick="currentVehicleId='${v.id}';renderAll();showPage('vehiculo')">
       <td><strong>${v.marca} ${v.modelo}</strong></td>
       <td style="font-family:'Syne';letter-spacing:1px;color:var(--accent)">${fmt(v.matricula)}</td>
@@ -639,24 +796,18 @@ function renderDashboard() {
 // ================================================================
 function renderVehiclePage() {
   const pg = document.getElementById('page-vehiculo');
-  const v = (data.vehicles || []).find(x => x.id === currentVehicleId);
-  if (!v) {
-    pg.innerHTML = `<div class="empty"><p>Selecciona un vehículo</p></div>`;
-    return;
-  }
+  const v = myVehicles().find(x=>x.id===currentVehicleId);
+  if (!v) { pg.innerHTML = `<div class="empty"><p>Selecciona un vehículo</p></div>`; return; }
 
   let html = `<div class="page-header">
-    <div>
-      <h2>${v.marca} ${v.modelo}</h2>
-      <div class="subtitle">${v.tipo ? v.tipo + ' · ' : ''}${v.matricula || 'Sin matrícula'} <span class="badge ${v.vendido?'danger':'ok'}" style="margin-left:8px">${v.vendido?'Vendido':'Activo'}</span></div>
-    </div>
+    <div><h2>${v.marca} ${v.modelo}</h2>
+    <div class="subtitle">${v.tipo?v.tipo+' · ':''}${v.matricula||'Sin matrícula'} <span class="badge ${v.vendido?'danger':'ok'}" style="margin-left:8px">${v.vendido?'Vendido':'Activo'}</span></div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn small" onclick="openModal('vehiculo','${v.id}')">✎ Editar</button>
       <button class="btn small danger" onclick="deleteVehicle('${v.id}')">✕ Eliminar</button>
     </div>
   </div><div class="content-body">`;
 
-  // DATOS BÁSICOS
   html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◈</span> Datos del vehículo</h3></div><div class="sb-body">
     <div class="info-grid">
       <div class="info-item"><div class="lbl">Tipo</div><div class="val">${fmt(v.tipo)}</div></div>
@@ -664,11 +815,9 @@ function renderVehiclePage() {
       <div class="info-item"><div class="lbl">Modelo</div><div class="val">${fmt(v.modelo)}</div></div>
       <div class="info-item"><div class="lbl">Matrícula</div><div class="val mono">${fmt(v.matricula)}</div></div>
       <div class="info-item"><div class="lbl">Motor</div><div class="val">${fmt(v.motor)}</div></div>
-      <div class="info-item"><div class="lbl">Potencia</div><div class="val">${v.potencia ? v.potencia + ' CV' : '—'}</div></div>
-    </div>
-  </div></div>`;
+      <div class="info-item"><div class="lbl">Potencia</div><div class="val">${v.potencia?v.potencia+' CV':'—'}</div></div>
+    </div></div></div>`;
 
-  // COMPRA
   html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Compra</h3></div><div class="sb-body">
     <div class="info-grid">
       <div class="info-item"><div class="lbl">Fecha</div><div class="val">${fmtDate(v.fechaCompra)}</div></div>
@@ -676,10 +825,9 @@ function renderVehiclePage() {
       <div class="info-item"><div class="lbl">Importe</div><div class="val">${fmtMoney(v.importeCompra)}</div></div>
       <div class="info-item"><div class="lbl">Vendedor</div><div class="val">${fmt(v.vendedor)}</div></div>
     </div>
-    ${v.notasCompra ? `<div style="margin-top:12px;padding:12px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2)">${v.notasCompra}</div>` : ''}
+    ${v.notasCompra?`<div style="margin-top:12px;padding:12px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2)">${v.notasCompra}</div>`:''}
   </div></div>`;
 
-  // VENTA
   if (v.vendido) {
     html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Venta</h3></div><div class="sb-body">
       <div class="info-grid">
@@ -687,7 +835,7 @@ function renderVehiclePage() {
         <div class="info-item"><div class="lbl">KM a la venta</div><div class="val">${fmtKm(v.kmVenta)}</div></div>
         <div class="info-item"><div class="lbl">Comprador</div><div class="val">${fmt(v.comprador)}</div></div>
       </div>
-      ${v.notasVenta ? `<div style="margin-top:12px;padding:12px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2)">${v.notasVenta}</div>` : ''}
+      ${v.notasVenta?`<div style="margin-top:12px;padding:12px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2)">${v.notasVenta}</div>`:''}
     </div></div>`;
   } else {
     html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Venta</h3>
@@ -695,169 +843,124 @@ function renderVehiclePage() {
     </div><div class="sb-body"><div class="empty" style="padding:20px 0"><p>Vehículo no vendido todavía</p></div></div></div>`;
   }
 
-  // SEGURO
-  html += renderSeguro(v);
-
-  // TALLERES
-  html += renderTalleres(v);
-
-  // ITV
-  html += renderITVs(v);
-
-  // HISTORIAL
-  html += renderHistorial(v);
-
+  html += renderSeguro(v) + renderTalleres(v) + renderITVs(v) + renderHistorial(v);
   html += `</div>`;
   pg.innerHTML = html;
 }
 
 function renderSeguro(v) {
-  const s = v.seguro || {};
-  const hasSeguro = s.compania || s.poliza;
+  const s = v.seguro||{};
+  const has = s.compania||s.poliza;
   let html = `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Seguro</h3>
-    <button class="btn small" onclick="openModal('seguro','${v.id}')">✎ ${hasSeguro ? 'Editar' : 'Añadir'}</button>
+    <button class="btn small" onclick="openModal('seguro','${v.id}')">✎ ${has?'Editar':'Añadir'}</button>
   </div><div class="sb-body">`;
-  if (!hasSeguro) {
-    html += `<div class="empty" style="padding:20px 0"><p>Sin seguro registrado</p></div>`;
-  } else {
-    const exp = s.vencimiento ? new Date(s.vencimiento + 'T12:00:00') : null;
-    const daysLeft = exp ? Math.round((exp - new Date()) / (1000*60*60*24)) : null;
+  if (!has) { html += `<div class="empty" style="padding:20px 0"><p>Sin seguro registrado</p></div>`; }
+  else {
+    const exp = s.vencimiento ? new Date(s.vencimiento+'T12:00:00') : null;
+    const dl = exp ? Math.round((exp-new Date())/(1000*60*60*24)) : null;
     html += `<div class="info-grid">
       <div class="info-item"><div class="lbl">Compañía</div><div class="val">${fmt(s.compania)}</div></div>
       <div class="info-item"><div class="lbl">Póliza</div><div class="val">${fmt(s.poliza)}</div></div>
-      <div class="info-item"><div class="lbl">Vencimiento</div><div class="val">${fmtDate(s.vencimiento)}${daysLeft !== null ? ` <span class="badge ${daysLeft < 30 ? 'danger' : daysLeft < 90 ? 'warn' : 'ok'}">${daysLeft < 0 ? 'Vencido' : daysLeft + 'd'}</span>` : ''}</div></div>
+      <div class="info-item"><div class="lbl">Vencimiento</div><div class="val">${fmtDate(s.vencimiento)}${dl!==null?` <span class="badge ${dl<30?'danger':dl<90?'warn':'ok'}">${dl<0?'Vencido':dl+'d'}</span>`:''}</div></div>
       <div class="info-item"><div class="lbl">Importe</div><div class="val">${fmtMoney(s.importe)}</div></div>
-    </div>
-    ${s.descripcion ? `<div style="margin-top:12px;padding:12px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2)">${s.descripcion}</div>` : ''}`;
+    </div>${s.descripcion?`<div style="margin-top:12px;padding:12px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2)">${s.descripcion}</div>`:''}`;
   }
-  html += `</div></div>`;
-  return html;
+  return html+'</div></div>';
 }
 
 function renderTalleres(v) {
-  const ts = (v.talleres || []).sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+  const ts = (v.talleres||[]).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
   let html = `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◈</span> Historial de taller</h3>
     <button class="btn small" onclick="openModal('taller','${v.id}')">+ Añadir</button>
   </div><div class="sb-body">`;
-  if (!ts.length) {
-    html += `<div class="empty" style="padding:20px 0"><p>Sin entradas de taller</p></div>`;
-  } else {
-    html += `<table class="hist-table"><thead><tr>
-      <th>Fecha</th><th>Taller</th><th>KM</th><th>Importe</th><th>Descripción</th><th></th>
-    </tr></thead><tbody>`;
+  if (!ts.length) { html += `<div class="empty" style="padding:20px 0"><p>Sin entradas de taller</p></div>`; }
+  else {
+    html += `<table class="hist-table"><thead><tr><th>Fecha</th><th>Taller</th><th>KM</th><th>Importe</th><th>Descripción</th><th></th></tr></thead><tbody>`;
     ts.forEach(t => {
-      const detHtml = (t.items||[]).map(it => `<div style="display:flex;gap:12px;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)">
-        <span style="flex:1">${it.concepto}</span>
-        <span style="color:var(--text3)">${it.cantidad}</span>
-        <span style="color:var(--accent);font-family:'Syne'">${fmtMoney(it.importe)}</span>
-      </div>`).join('');
+      const detHtml = (t.items||[]).map(it=>`<div style="display:flex;gap:12px;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)">
+        <span style="flex:1">${it.concepto}</span><span style="color:var(--text3)">${it.cantidad}</span>
+        <span style="color:var(--accent);font-family:'Syne'">${fmtMoney(it.importe)}</span></div>`).join('');
       html += `<tr>
-        <td class="date">${fmtDate(t.fecha)}</td>
-        <td>${fmt(t.taller)}</td>
-        <td>${fmtKm(t.km)}</td>
-        <td class="amount">${fmtMoney(t.importe)}</td>
-        <td class="desc">${fmt(t.descripcion)}</td>
+        <td class="date">${fmtDate(t.fecha)}</td><td>${fmt(t.taller)}</td><td>${fmtKm(t.km)}</td>
+        <td class="amount">${fmtMoney(t.importe)}</td><td class="desc">${fmt(t.descripcion)}</td>
         <td style="white-space:nowrap">
           <button class="btn small" onclick="openModal('taller','${v.id}','${t.id}')">✎</button>
           <button class="btn small danger" onclick="deleteItem('talleres','${v.id}','${t.id}')">✕</button>
-        </td>
-      </tr>`;
-      if (t.items && t.items.length) {
-        html += `<tr><td colspan="6" style="padding:0 0 12px 0"><div style="background:var(--bg3);border-radius:8px;padding:12px;margin-top:-4px">${detHtml}</div></td></tr>`;
-      }
+        </td></tr>`;
+      if (t.items&&t.items.length) html += `<tr><td colspan="6" style="padding:0 0 12px 0"><div style="background:var(--bg3);border-radius:8px;padding:12px;margin-top:-4px">${detHtml}</div></td></tr>`;
     });
     html += `</tbody></table>`;
   }
-  html += `</div></div>`;
-  return html;
+  return html+'</div></div>';
 }
 
 function renderITVs(v) {
-  const its = (v.itvs || []).sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+  const its = (v.itvs||[]).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
   let html = `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Historial de ITV</h3>
     <button class="btn small" onclick="openModal('itv','${v.id}')">+ Añadir</button>
   </div><div class="sb-body">`;
-  if (!its.length) {
-    html += `<div class="empty" style="padding:20px 0"><p>Sin ITV registradas</p></div>`;
-  } else {
+  if (!its.length) html += `<div class="empty" style="padding:20px 0"><p>Sin ITV registradas</p></div>`;
+  else {
     html += `<table class="hist-table"><thead><tr><th>Fecha</th><th>Lugar</th><th>KM</th><th>Observaciones</th><th></th></tr></thead><tbody>`;
     its.forEach(it => {
-      html += `<tr>
-        <td class="date">${fmtDate(it.fecha)}</td>
-        <td>${fmt(it.lugar)}</td>
-        <td>${fmtKm(it.km)}</td>
-        <td class="desc">${fmt(it.observaciones)}</td>
+      html += `<tr><td class="date">${fmtDate(it.fecha)}</td><td>${fmt(it.lugar)}</td><td>${fmtKm(it.km)}</td><td class="desc">${fmt(it.observaciones)}</td>
         <td style="white-space:nowrap">
           <button class="btn small" onclick="openModal('itv','${v.id}','${it.id}')">✎</button>
           <button class="btn small danger" onclick="deleteItem('itvs','${v.id}','${it.id}')">✕</button>
-        </td>
-      </tr>`;
+        </td></tr>`;
     });
     html += `</tbody></table>`;
   }
-  html += `</div></div>`;
-  return html;
+  return html+'</div></div>';
 }
 
 function renderHistorial(v) {
-  const hs = (v.historial || []).sort((a,b) => new Date(b.fecha) - new Date(a.fecha));
+  const hs = (v.historial||[]).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
   let html = `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Historial del vehículo</h3>
     <button class="btn small" onclick="openModal('historial','${v.id}')">+ Anotar</button>
   </div><div class="sb-body">`;
-  if (!hs.length) {
-    html += `<div class="empty" style="padding:20px 0"><p>Sin anotaciones</p></div>`;
-  } else {
+  if (!hs.length) html += `<div class="empty" style="padding:20px 0"><p>Sin anotaciones</p></div>`;
+  else {
     html += `<table class="hist-table"><thead><tr><th>Fecha</th><th>Nota</th><th></th></tr></thead><tbody>`;
     hs.forEach(h => {
-      html += `<tr>
-        <td class="date" style="width:110px">${fmtDate(h.fecha)}</td>
-        <td>${h.nota || '—'}</td>
+      html += `<tr><td class="date" style="width:110px">${fmtDate(h.fecha)}</td><td>${h.nota||'—'}</td>
         <td style="white-space:nowrap">
           <button class="btn small" onclick="openModal('historial','${v.id}','${h.id}')">✎</button>
           <button class="btn small danger" onclick="deleteItem('historial','${v.id}','${h.id}')">✕</button>
-        </td>
-      </tr>`;
+        </td></tr>`;
     });
     html += `</tbody></table>`;
   }
-  html += `</div></div>`;
-  return html;
+  return html+'</div></div>';
 }
 
 // ================================================================
-// BUSCAR EN TALLER
+// BUSCAR
 // ================================================================
 function renderBuscar() {
   const pg = document.getElementById('page-buscar');
   pg.innerHTML = `<div class="page-header"><div><h2>Buscar en taller</h2>
     <div class="subtitle">Localiza conceptos en el detalle de facturas</div></div></div>
   <div class="content-body">
-    <div class="search-box">
-      <input type="text" id="search-input" placeholder="Ej: batería, aceite, frenos, correa…"
-        oninput="doSearch()" style="flex:1;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:10px 14px;border-radius:8px;font-family:'DM Sans';font-size:14px">
-    </div>
-    <div id="search-results"><div class="empty"><div class="em-icon">◎</div><p>Escribe para buscar en todos los detalles de taller</p></div></div>
+    <input type="text" id="search-input" placeholder="Ej: batería, aceite, frenos, correa…"
+      oninput="doSearch()" style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:10px 14px;border-radius:8px;font-family:'DM Sans';font-size:14px;margin-bottom:20px">
+    <div id="search-results"><div class="empty"><div class="em-icon">◎</div><p>Escribe para buscar</p></div></div>
   </div>`;
 }
 
 function doSearch() {
-  const q = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+  const q = (document.getElementById('search-input')?.value||'').toLowerCase().trim();
   const res = document.getElementById('search-results');
   if (!q) { res.innerHTML = `<div class="empty"><p>Escribe para buscar</p></div>`; return; }
-
   const found = [];
-  (data.vehicles || []).forEach(v => {
-    (v.talleres || []).forEach(t => {
-      (t.items || []).forEach(it => {
-        if ((it.concepto || '').toLowerCase().includes(q)) {
-          found.push({ v, t, it });
-        }
+  myVehicles().forEach(v => {
+    (v.talleres||[]).forEach(t => {
+      (t.items||[]).forEach(it => {
+        if ((it.concepto||'').toLowerCase().includes(q)) found.push({v,t,it});
       });
     });
   });
-
   if (!found.length) { res.innerHTML = `<div class="empty"><p>Sin resultados para "<strong>${q}</strong>"</p></div>`; return; }
-
   res.innerHTML = found.map(({v,t,it}) => `
     <div class="result-card">
       <div class="rc-header">
@@ -879,41 +982,54 @@ function doSearch() {
 // ================================================================
 // MODALS
 // ================================================================
-function openModal(type, vehicleId, itemId) {
-  modalType = type; editId = itemId || null;
-  if (vehicleId) currentVehicleId = vehicleId;
-  const v = (data.vehicles||[]).find(x => x.id === currentVehicleId);
+function switchTab(t) {
+  document.querySelectorAll('.login-tab').forEach((el,i) => el.classList.toggle('active', ['login','register','recover'][i]===t));
+  document.querySelectorAll('.login-section').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+}
 
+function openModal(type, vehicleId, itemId) {
+  modalType = type; editId = itemId||null;
+  if (vehicleId) currentVehicleId = vehicleId;
+  const v = myVehicles().find(x=>x.id===currentVehicleId);
   const overlay = document.getElementById('modal-overlay');
   const body = document.getElementById('modal-body');
   const title = document.getElementById('modal-title');
+  const saveBtn = document.getElementById('modal-save-btn');
   subItems = [];
+  saveBtn.style.display = '';
 
-  if (type === 'vehiculo') {
-    title.textContent = editId ? 'Editar vehículo' : 'Nuevo vehículo';
-    const ev = editId ? (data.vehicles||[]).find(x => x.id === editId) : {};
-    body.innerHTML = buildVehiculoForm(ev || {});
-  } else if (type === 'venta') {
+  if (type==='vehiculo') {
+    title.textContent = editId?'Editar vehículo':'Nuevo vehículo';
+    const ev = editId ? DB.vehicles.find(x=>x.id===editId) : {};
+    body.innerHTML = buildVehiculoForm(ev||{});
+  } else if (type==='venta') {
     title.textContent = 'Registrar venta';
-    const ev = v || {};
-    body.innerHTML = buildVentaForm(ev);
-  } else if (type === 'seguro') {
+    body.innerHTML = buildVentaForm(v||{});
+  } else if (type==='seguro') {
     title.textContent = 'Seguro del vehículo';
-    body.innerHTML = buildSeguroForm(v?.seguro || {});
-  } else if (type === 'taller') {
-    title.textContent = editId ? 'Editar entrada taller' : 'Nueva entrada taller';
-    const et = editId ? (v?.talleres||[]).find(x => x.id === editId) : {};
-    subItems = (et?.items || []).map(i => ({...i}));
-    body.innerHTML = buildTallerForm(et || {});
+    body.innerHTML = buildSeguroForm(v?.seguro||{});
+  } else if (type==='taller') {
+    title.textContent = editId?'Editar entrada taller':'Nueva entrada taller';
+    const et = editId ? (v?.talleres||[]).find(x=>x.id===editId) : {};
+    subItems = (et?.items||[]).map(i=>({...i}));
+    body.innerHTML = buildTallerForm(et||{});
     renderSubItems();
-  } else if (type === 'itv') {
-    title.textContent = editId ? 'Editar ITV' : 'Nueva ITV';
-    const et = editId ? (v?.itvs||[]).find(x => x.id === editId) : {};
-    body.innerHTML = buildITVForm(et || {});
-  } else if (type === 'historial') {
-    title.textContent = editId ? 'Editar anotación' : 'Nueva anotación';
-    const et = editId ? (v?.historial||[]).find(x => x.id === editId) : {};
-    body.innerHTML = buildHistorialForm(et || {});
+  } else if (type==='itv') {
+    title.textContent = editId?'Editar ITV':'Nueva ITV';
+    const et = editId ? (v?.itvs||[]).find(x=>x.id===editId) : {};
+    body.innerHTML = buildITVForm(et||{});
+  } else if (type==='historial') {
+    title.textContent = editId?'Editar anotación':'Nueva anotación';
+    const et = editId ? (v?.historial||[]).find(x=>x.id===editId) : {};
+    body.innerHTML = buildHistorialForm(et||{});
+  } else if (type==='perfil') {
+    title.textContent = 'Mi perfil';
+    body.innerHTML = buildPerfilForm(currentUser);
+  } else if (type==='admin') {
+    title.textContent = 'Administración';
+    saveBtn.style.display = 'none';
+    body.innerHTML = buildAdminPanel();
   }
 
   overlay.classList.add('open');
@@ -924,101 +1040,91 @@ function closeModal() {
   modalType = null; editId = null; subItems = [];
 }
 
-function val(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+function val(id) { const el=document.getElementById(id); return el?el.value:''; }
 
-function saveModal() {
-  const v = (data.vehicles||[]).find(x => x.id === currentVehicleId);
+async function saveModal() {
+  const v = myVehicles().find(x=>x.id===currentVehicleId);
 
-  if (modalType === 'vehiculo') {
+  if (modalType==='vehiculo') {
     const obj = {
-      id: editId || uid(), tipo: val('v-tipo'), marca: val('v-marca'), modelo: val('v-modelo'),
-      matricula: val('v-matricula'), motor: val('v-motor'), potencia: val('v-potencia'),
-      fechaCompra: val('v-fechaCompra'), kmCompra: val('v-kmCompra'), importeCompra: val('v-importeCompra'),
-      vendedor: val('v-vendedor'), notasCompra: val('v-notasCompra'),
-      talleres: [], itvs: [], historial: [], seguro: {}
+      id: editId||uid(), userId: currentUser.id,
+      tipo:val('v-tipo'), marca:val('v-marca'), modelo:val('v-modelo'),
+      matricula:val('v-matricula'), motor:val('v-motor'), potencia:val('v-potencia'),
+      fechaCompra:val('v-fechaCompra'), kmCompra:val('v-kmCompra'), importeCompra:val('v-importeCompra'),
+      vendedor:val('v-vendedor'), notasCompra:val('v-notasCompra'),
+      talleres:[], itvs:[], historial:[], seguro:{}
     };
     if (!obj.marca) { alert('La marca es obligatoria'); return; }
     if (editId) {
-      const idx = data.vehicles.findIndex(x => x.id === editId);
-      if (idx >= 0) {
-        obj.talleres = data.vehicles[idx].talleres || [];
-        obj.itvs = data.vehicles[idx].itvs || [];
-        obj.historial = data.vehicles[idx].historial || [];
-        obj.seguro = data.vehicles[idx].seguro || {};
-        obj.vendido = data.vehicles[idx].vendido;
-        obj.fechaVenta = data.vehicles[idx].fechaVenta;
-        obj.kmVenta = data.vehicles[idx].kmVenta;
-        obj.comprador = data.vehicles[idx].comprador;
-        obj.notasVenta = data.vehicles[idx].notasVenta;
-        data.vehicles[idx] = obj;
+      const idx = DB.vehicles.findIndex(x=>x.id===editId);
+      if (idx>=0) {
+        obj.talleres=DB.vehicles[idx].talleres||[];
+        obj.itvs=DB.vehicles[idx].itvs||[];
+        obj.historial=DB.vehicles[idx].historial||[];
+        obj.seguro=DB.vehicles[idx].seguro||{};
+        obj.vendido=DB.vehicles[idx].vendido;
+        obj.fechaVenta=DB.vehicles[idx].fechaVenta;
+        obj.kmVenta=DB.vehicles[idx].kmVenta;
+        obj.comprador=DB.vehicles[idx].comprador;
+        obj.notasVenta=DB.vehicles[idx].notasVenta;
+        DB.vehicles[idx]=obj;
       }
-    } else {
-      if (!data.vehicles) data.vehicles = [];
-      data.vehicles.push(obj);
-      currentVehicleId = obj.id;
-    }
-  } else if (modalType === 'venta' && v) {
-    v.vendido = true;
-    v.fechaVenta = val('vt-fecha');
-    v.kmVenta = val('vt-km');
-    v.comprador = val('vt-comprador');
-    v.notasVenta = val('vt-notas');
-  } else if (modalType === 'seguro' && v) {
-    v.seguro = { compania: val('s-compania'), poliza: val('s-poliza'), vencimiento: val('s-vencimiento'), importe: val('s-importe'), descripcion: val('s-descripcion') };
-  } else if (modalType === 'taller' && v) {
-    if (!v.talleres) v.talleres = [];
-    const obj = { id: editId || uid(), fecha: val('t-fecha'), taller: val('t-taller'), km: val('t-km'), importe: val('t-importe'), descripcion: val('t-descripcion'), items: subItems.filter(i => i.concepto) };
-    if (editId) { const idx = v.talleres.findIndex(x => x.id === editId); if (idx >= 0) v.talleres[idx] = obj; }
+    } else { DB.vehicles.push(obj); currentVehicleId=obj.id; }
+  } else if (modalType==='venta' && v) {
+    v.vendido=true; v.fechaVenta=val('vt-fecha'); v.kmVenta=val('vt-km');
+    v.comprador=val('vt-comprador'); v.notasVenta=val('vt-notas');
+  } else if (modalType==='seguro' && v) {
+    v.seguro={compania:val('s-compania'),poliza:val('s-poliza'),vencimiento:val('s-vencimiento'),importe:val('s-importe'),descripcion:val('s-descripcion')};
+  } else if (modalType==='taller' && v) {
+    if (!v.talleres) v.talleres=[];
+    const obj={id:editId||uid(),fecha:val('t-fecha'),taller:val('t-taller'),km:val('t-km'),importe:val('t-importe'),descripcion:val('t-descripcion'),items:subItems.filter(i=>i.concepto)};
+    if (editId) { const idx=v.talleres.findIndex(x=>x.id===editId); if(idx>=0) v.talleres[idx]=obj; }
     else v.talleres.push(obj);
-  } else if (modalType === 'itv' && v) {
-    if (!v.itvs) v.itvs = [];
-    const obj = { id: editId || uid(), fecha: val('i-fecha'), lugar: val('i-lugar'), km: val('i-km'), observaciones: val('i-obs') };
-    if (editId) { const idx = v.itvs.findIndex(x => x.id === editId); if (idx >= 0) v.itvs[idx] = obj; }
+  } else if (modalType==='itv' && v) {
+    if (!v.itvs) v.itvs=[];
+    const obj={id:editId||uid(),fecha:val('i-fecha'),lugar:val('i-lugar'),km:val('i-km'),observaciones:val('i-obs')};
+    if (editId) { const idx=v.itvs.findIndex(x=>x.id===editId); if(idx>=0) v.itvs[idx]=obj; }
     else v.itvs.push(obj);
-  } else if (modalType === 'historial' && v) {
-    if (!v.historial) v.historial = [];
-    const obj = { id: editId || uid(), fecha: val('h-fecha'), nota: val('h-nota') };
-    if (editId) { const idx = v.historial.findIndex(x => x.id === editId); if (idx >= 0) v.historial[idx] = obj; }
+  } else if (modalType==='historial' && v) {
+    if (!v.historial) v.historial=[];
+    const obj={id:editId||uid(),fecha:val('h-fecha'),nota:val('h-nota')};
+    if (editId) { const idx=v.historial.findIndex(x=>x.id===editId); if(idx>=0) v.historial[idx]=obj; }
     else v.historial.push(obj);
+  } else if (modalType==='perfil') {
+    await savePerfil();
+    return;
   }
 
-  saveData();
+  await saveDB();
   closeModal();
   renderAll();
-  if (modalType !== 'vehiculo' || editId) showPage('vehiculo');
-  else showPage('vehiculo');
+  showPage(modalType==='vehiculo' ? 'vehiculo' : 'vehiculo');
 }
 
 function deleteVehicle(id) {
   if (!confirm('¿Eliminar este vehículo y todos sus datos?')) return;
-  data.vehicles = (data.vehicles||[]).filter(x => x.id !== id);
+  DB.vehicles = DB.vehicles.filter(x=>x.id!==id);
   currentVehicleId = null;
-  saveData();
-  renderAll();
-  showPage('dashboard');
+  saveDB(); renderAll(); showPage('dashboard');
 }
 
-function deleteItem(collection, vehicleId, itemId) {
+function deleteItem(col, vehicleId, itemId) {
   if (!confirm('¿Eliminar esta entrada?')) return;
-  const v = (data.vehicles||[]).find(x => x.id === vehicleId);
+  const v = DB.vehicles.find(x=>x.id===vehicleId);
   if (!v) return;
-  v[collection] = (v[collection]||[]).filter(x => x.id !== itemId);
-  saveData();
-  renderAll();
-  showPage('vehiculo');
+  v[col] = (v[col]||[]).filter(x=>x.id!==itemId);
+  saveDB(); renderAll(); showPage('vehiculo');
 }
 
 // ================================================================
 // FORM BUILDERS
 // ================================================================
-const today = () => new Date().toISOString().slice(0,10);
-
 function buildVehiculoForm(e) {
   return `
   <div class="form-row cols-3">
     <div class="form-group"><label>Tipo</label>
       <select id="v-tipo"><option value="">—</option>
-        ${['Turismo','SUV','Furgoneta','Camión','Moto','Otro'].map(t => `<option ${e.tipo===t?'selected':''}>${t}</option>`).join('')}
+        ${['Turismo','SUV','Furgoneta','Camión','Moto','Otro'].map(t=>`<option ${e.tipo===t?'selected':''}>${t}</option>`).join('')}
       </select></div>
     <div class="form-group"><label>Marca *</label><input id="v-marca" value="${e.marca||''}"></div>
     <div class="form-group"><label>Modelo</label><input id="v-modelo" value="${e.modelo||''}"></div>
@@ -1070,7 +1176,7 @@ function buildTallerForm(e) {
     <div class="form-group"><label>KM</label><input id="t-km" type="number" value="${e.km||''}"></div>
   </div>
   <div class="form-row cols-2">
-    <div class="form-group"><label>Taller / Taller</label><input id="t-taller" value="${e.taller||''}"></div>
+    <div class="form-group"><label>Taller</label><input id="t-taller" value="${e.taller||''}"></div>
     <div class="form-group"><label>Importe total factura (€)</label><input id="t-importe" type="number" step="0.01" value="${e.importe||''}"></div>
   </div>
   <div class="form-row"><div class="form-group"><label>Descripción breve</label><input id="t-descripcion" value="${e.descripcion||''}"></div></div>
@@ -1096,22 +1202,149 @@ function buildHistorialForm(e) {
   <div class="form-row"><div class="form-group"><label>Nota / Descripción</label><textarea id="h-nota" style="min-height:100px">${e.nota||''}</textarea></div></div>`;
 }
 
+function buildPerfilForm(u) {
+  return `
+  <div class="form-row"><div class="form-group">
+    <label>Usuario (no editable)</label>
+    <input value="${u.username}" disabled style="opacity:0.5;cursor:not-allowed">
+  </div></div>
+  <div class="form-row cols-2">
+    <div class="form-group"><label>Nombre completo</label><input id="p-nombre" value="${u.nombre||''}"></div>
+    <div class="form-group"><label>Email</label><input id="p-email" type="email" value="${u.email||''}"></div>
+  </div>
+  <hr class="form-sep">
+  <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Cambiar contraseña (dejar vacío para no cambiar)</div>
+  <div class="form-row cols-3">
+    <div class="form-group"><label>Contraseña actual</label><input id="p-pass-old" type="password"></div>
+    <div class="form-group"><label>Nueva contraseña</label><input id="p-pass-new" type="password"></div>
+    <div class="form-group"><label>Repetir nueva</label><input id="p-pass-new2" type="password"></div>
+  </div>
+  <div id="perfil-msg" class="login-msg"></div>`;
+}
+
+async function savePerfil() {
+  const nombre = val('p-nombre').trim();
+  const email = val('p-email').trim();
+  const passOld = val('p-pass-old');
+  const passNew = val('p-pass-new');
+  const passNew2 = val('p-pass-new2');
+  const msg = document.getElementById('perfil-msg');
+
+  if (!nombre) { showMsg(msg,'error','El nombre no puede estar vacío'); return; }
+
+  if (passNew) {
+    if (passNew.length < 4) { showMsg(msg,'error','La contraseña debe tener al menos 4 caracteres'); return; }
+    if (passNew !== passNew2) { showMsg(msg,'error','Las contraseñas no coinciden'); return; }
+    const oldHash = await sha256(passOld);
+    if (oldHash !== currentUser.passHash) { showMsg(msg,'error','La contraseña actual no es correcta'); return; }
+    currentUser.passHash = await sha256(passNew);
+  }
+
+  currentUser.nombre = nombre;
+  currentUser.email = email;
+  const idx = DB.users.findIndex(u=>u.id===currentUser.id);
+  if (idx>=0) DB.users[idx] = currentUser;
+
+  await saveDB();
+  document.getElementById('uc-name').textContent = nombre;
+  document.getElementById('uc-avatar').textContent = nombre.slice(0,2).toUpperCase();
+  closeModal();
+}
+
+function buildAdminPanel() {
+  const users = DB.users;
+  const invs = (DB.invitations||[]).filter(i=>!i.usedBy);
+  const logs = (DB.logs||[]).slice(-20).reverse();
+
+  let html = `
+  <!-- USUARIOS -->
+  <div style="margin-bottom:20px">
+    <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">Usuarios registrados</div>
+    <table class="hist-table"><thead><tr><th>Usuario</th><th>Nombre</th><th>Email</th><th>Alta</th><th>Rol</th><th></th></tr></thead><tbody>`;
+  users.forEach(u => {
+    html += `<tr>
+      <td style="font-family:'Syne'">${u.username}</td>
+      <td>${u.nombre||'—'}</td><td style="font-size:12px;color:var(--text2)">${u.email||'—'}</td>
+      <td class="date">${fmtDate(u.fechaAlta)}</td>
+      <td><span class="badge ${u.role==='admin'?'warn':'info'}">${u.role||'user'}</span></td>
+      <td>${u.id!==currentUser.id?`<button class="btn small danger" onclick="adminResetPass('${u.id}')">Reset pass</button>`:'<span style="color:var(--text3);font-size:11px">tú</span>'}</td>
+    </tr>`;
+  });
+  html += `</tbody></table></div>
+
+  <!-- INVITACIONES -->
+  <div style="margin-bottom:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px">Invitaciones activas</div>
+      <button class="btn small primary" onclick="generateInvite()">+ Generar código</button>
+    </div>
+    <div id="invite-list">`;
+  if (!invs.length) html += `<div style="font-size:13px;color:var(--text3);padding:10px 0">Sin invitaciones pendientes</div>`;
+  else invs.forEach(i => {
+    html += `<div class="invite-code-box">
+      <div style="font-size:11px;color:var(--text3)">Creada por ${i.createdBy}</div>
+      <div class="code">${i.code}</div>
+      <div class="exp">Expira: ${fmtDate(i.expiresAt)} · <a style="color:var(--red);cursor:pointer" onclick="revokeInvite('${i.code}')">Revocar</a></div>
+    </div>`;
+  });
+  html += `</div></div>
+
+  <!-- LOGS -->
+  <div>
+    <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">Últimas conexiones</div>
+    <table class="hist-table"><thead><tr><th>Usuario</th><th>Acción</th><th>Fecha/hora</th></tr></thead><tbody>`;
+  logs.forEach(l => {
+    const icons = {login:'→',logout:'←',register:'✦'};
+    html += `<tr><td style="font-family:'Syne'">${l.username}</td>
+      <td><span class="badge ${l.action==='login'?'ok':l.action==='logout'?'info':'warn'}">${icons[l.action]||''} ${l.action}</span></td>
+      <td class="date">${new Date(l.ts).toLocaleString('es-ES')}</td></tr>`;
+  });
+  html += `</tbody></table></div>`;
+  return html;
+}
+
+async function generateInvite() {
+  const code = Math.random().toString(36).slice(2,8).toUpperCase();
+  const exp = new Date(); exp.setDate(exp.getDate()+7);
+  DB.invitations.push({
+    code, createdBy: currentUser.username,
+    createdAt: tsNow(), usedBy: null, usedAt: null,
+    expiresAt: exp.toISOString().slice(0,10)
+  });
+  await saveDB();
+  // Refresh admin panel
+  document.getElementById('modal-body').innerHTML = buildAdminPanel();
+  alert(`Código de invitación generado:\n\n${code}\n\nVálido 7 días. Compártelo con la persona que quieras invitar.`);
+}
+
+async function revokeInvite(code) {
+  if (!confirm('¿Revocar este código de invitación?')) return;
+  DB.invitations = DB.invitations.filter(i=>i.code!==code);
+  await saveDB();
+  document.getElementById('modal-body').innerHTML = buildAdminPanel();
+}
+
+async function adminResetPass(userId) {
+  const newPass = prompt('Nueva contraseña para este usuario:');
+  if (!newPass || newPass.length < 4) { alert('Contraseña demasiado corta'); return; }
+  const u = DB.users.find(x=>x.id===userId);
+  if (!u) return;
+  u.passHash = await sha256(newPass);
+  await saveDB();
+  alert(`Contraseña de "${u.username}" actualizada.`);
+}
+
 function addSubItem() {
-  subItems.push({ id: uid(), concepto: '', cantidad: 1, importe: '' });
+  subItems.push({id:uid(),concepto:'',cantidad:1,importe:''});
   renderSubItems();
 }
-
-function removeSubItem(idx) {
-  subItems.splice(idx, 1);
-  renderSubItems();
-}
-
+function removeSubItem(idx) { subItems.splice(idx,1); renderSubItems(); }
 function renderSubItems() {
   const c = document.getElementById('sub-items-container');
   if (!c) return;
-  if (!subItems.length) { c.innerHTML = ''; return; }
+  if (!subItems.length) { c.innerHTML=''; return; }
   let html = `<div class="sub-item-header"><span>Concepto</span><span>Cantidad</span><span>Importe (€)</span><span></span></div>`;
-  subItems.forEach((it, i) => {
+  subItems.forEach((it,i) => {
     html += `<div class="sub-item">
       <input type="text" value="${it.concepto||''}" placeholder="Concepto…" oninput="subItems[${i}].concepto=this.value">
       <input type="number" value="${it.cantidad||1}" min="0.01" step="any" oninput="subItems[${i}].cantidad=this.value">
@@ -1122,60 +1355,26 @@ function renderSubItems() {
   c.innerHTML = html;
 }
 
-function resetClientId() {
-  if (confirm('¿Cambiar el Client ID de Google o desconectar?\n\nEsto borrará el Client ID guardado y recargará la página.')) {
-    localStorage.removeItem('gc_client_id');
-    localStorage.removeItem('gc_token_exp');
-    accessToken = null;
-    location.reload();
-  }
-}
-
 // ================================================================
 // INIT
 // ================================================================
 window.onload = function() {
-  // Load GAPI
   const cid = localStorage.getItem('gc_client_id');
   if (cid) {
-    // Show reset button
-    setTimeout(() => {
-      const rb = document.getElementById('reset-btn');
-      if (rb) rb.style.display = 'inline-block';
-    }, 100);
+    showLoading('Conectando con Google Drive…');
     const s = document.createElement('script');
     s.src = 'https://accounts.google.com/gsi/client';
-    s.onload = () => {
-      initGapi();
-      // Auto-reconnect if token not expired
-      const exp = localStorage.getItem('gc_token_exp');
-      if (exp && Date.now() < Number(exp) && tokenClient) {
-        tokenClient.requestAccessToken({ prompt: '' });
-      }
+    s.onload = () => initGapi();
+    s.onerror = () => {
+      hideLoading();
+      setDriveStatus(false, 'Error cargando Google Identity Services');
     };
-    s.onerror = () => console.error('No se pudo cargar Google Identity Services');
     document.head.appendChild(s);
+  } else {
+    setDriveStatus(false, 'Sin configurar');
+    document.getElementById('drive-cfg-link').style.display = 'block';
   }
-
-  // Load local data for offline preview
-  const local = localStorage.getItem('flota_local_data');
-  if (local) { try { data = JSON.parse(local); } catch(e) {} }
-
-  renderAll();
-  showPage('dashboard');
-
-  // Auto-save to localStorage as backup
-  setInterval(() => {
-    try { localStorage.setItem('flota_local_data', JSON.stringify(data)); } catch(e) {}
-  }, 5000);
 };
-
-// Save to localStorage on unload
-window.addEventListener('beforeunload', () => {
-  try { localStorage.setItem('flota_local_data', JSON.stringify(data)); } catch(e) {}
-});
 </script>
-
-<!-- Google Identity Services cargado solo si hay client ID -->
 </body>
 </html>
