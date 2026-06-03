@@ -353,7 +353,7 @@ h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
 // CONFIG & STATE
 // ================================================================
 const FILE_NAME = 'flota_data_v2.json';
-const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata';
 const ADMIN_USER = 'idlm2010';
 
 let tokenClient = null;
@@ -475,24 +475,59 @@ async function findFile() {
   return false;
 }
 
+async function findOldFile() {
+  const OLD_FILE = 'flota_vehiculos_v1.json';
+  for (const spaces of ['drive', 'appDataFolder']) {
+    try {
+      const list = await driveReq('GET',
+        `https://www.googleapis.com/drive/v3/files?q=name='${OLD_FILE}' and trashed=false&fields=files(id,name)&spaces=${spaces}`);
+      if (list.files && list.files.length > 0) return list.files[0].id;
+    } catch(e) {}
+  }
+  return null;
+}
+
+async function readDriveFile(fileId) {
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+    headers: { 'Authorization': 'Bearer '+accessToken }
+  });
+  return res.json();
+}
+
 async function loadDB() {
   showLoading('Cargando datos…');
   try {
     const found = await findFile();
     if (found) {
-      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${driveFileId}?alt=media`, {
-        headers: { 'Authorization': 'Bearer '+accessToken }
-      });
-      const raw = await res.json();
-      // Migrate from old format if needed
-      DB = migrateData(raw);
+      const raw = await readDriveFile(driveFileId);
+      // If new file has no users, try migrating from old file
+      if (!raw.users || raw.users.length === 0) {
+        showLoading('Migrando datos anteriores…');
+        const oldId = await findOldFile();
+        if (oldId) {
+          const oldRaw = await readDriveFile(oldId);
+          DB = migrateData(oldRaw);
+        } else {
+          DB = migrateData(raw);
+        }
+        await saveDB();
+      } else {
+        DB = migrateData(raw);
+      }
     } else {
-      DB = makeDefaultDB();
+      // New file doesn't exist — try old file
+      showLoading('Buscando datos anteriores…');
+      const oldId = await findOldFile();
+      if (oldId) {
+        const oldRaw = await readDriveFile(oldId);
+        DB = migrateData(oldRaw);
+      } else {
+        DB = makeDefaultDB();
+      }
       await saveDB();
     }
     setDriveStatus(true, 'Google Drive conectado ✓');
     hideLoading();
-    // Try auto-login
     tryAutoLogin();
   } catch(e) {
     setDriveStatus(false, 'Error: '+e.message);
