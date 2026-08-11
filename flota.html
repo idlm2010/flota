@@ -850,6 +850,9 @@ function renderVehiclePage() {
       <div class="info-item"><div class="lbl">Matrícula</div><div class="val mono">${fmt(v.matricula)}</div></div>
       <div class="info-item"><div class="lbl">Motor</div><div class="val">${fmt(v.motor)}</div></div>
       <div class="info-item"><div class="lbl">Potencia</div><div class="val">${v.potencia?v.potencia+' CV':'—'}</div></div>
+      <div class="info-item"><div class="lbl">Revisar cada</div><div class="val">${v.revisionKm?fmtKm(v.revisionKm):'—'}</div></div>
+      <div class="info-item"><div class="lbl">Presión delantera</div><div class="val">${v.presionDel?v.presionDel+' bar':'—'}</div></div>
+      <div class="info-item"><div class="lbl">Presión trasera</div><div class="val">${v.presionTras?v.presionTras+' bar':'—'}</div></div>
     </div></div></div>`;
 
   html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Compra</h3></div><div class="sb-body">
@@ -1085,6 +1088,7 @@ async function saveModal() {
       id: editId||uid(), userId: currentUser.id,
       tipo:val('v-tipo'), marca:val('v-marca'), modelo:val('v-modelo'),
       matricula:val('v-matricula'), motor:val('v-motor'), potencia:val('v-potencia'),
+      revisionKm:val('v-revisionKm'), presionDel:val('v-presionDel'), presionTras:val('v-presionTras'),
       fechaCompra:val('v-fechaCompra'), kmCompra:val('v-kmCompra'), importeCompra:val('v-importeCompra'),
       vendedor:val('v-vendedor'), notasCompra:val('v-notasCompra'),
       talleres:[], itvs:[], historial:[], seguro:{}
@@ -1168,6 +1172,11 @@ function buildVehiculoForm(e) {
     <div class="form-group"><label>Matrícula</label><input id="v-matricula" value="${e.matricula||''}"></div>
     <div class="form-group"><label>Motor</label><input id="v-motor" value="${e.motor||''}" placeholder="1.5 TDI"></div>
     <div class="form-group"><label>Potencia (CV)</label><input id="v-potencia" type="number" value="${e.potencia||''}"></div>
+  </div>
+  <div class="form-row cols-3">
+    <div class="form-group"><label>Revisar cada (km)</label><input id="v-revisionKm" type="number" value="${e.revisionKm||''}" placeholder="15000"></div>
+    <div class="form-group"><label>Presión neumático delantero (bar)</label><input id="v-presionDel" type="number" step="0.1" value="${e.presionDel||''}" placeholder="2.2"></div>
+    <div class="form-group"><label>Presión neumático trasero (bar)</label><input id="v-presionTras" type="number" step="0.1" value="${e.presionTras||''}" placeholder="2.4"></div>
   </div>
   <hr class="form-sep">
   <div class="form-row cols-2">
