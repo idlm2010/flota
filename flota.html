@@ -880,7 +880,7 @@ function renderVehiclePage() {
     </div><div class="sb-body"><div class="empty" style="padding:20px 0"><p>Vehículo no vendido todavía</p></div></div></div>`;
   }
 
-  html += renderSeguro(v) + renderTalleres(v) + renderITVs(v) + renderHistorial(v);
+  html += renderSeguro(v) + renderTalleres(v) + renderITVs(v) + renderHistorial(v) + renderViajes(v);
   html += `</div>`;
   pg.innerHTML = html;
 }
@@ -964,6 +964,31 @@ function renderHistorial(v) {
         <td style="white-space:nowrap">
           <button class="btn small" onclick="openModal('historial','${v.id}','${h.id}')">✎</button>
           <button class="btn small danger" onclick="deleteItem('historial','${v.id}','${h.id}')">✕</button>
+        </td></tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  return html+'</div></div>';
+}
+
+function renderViajes(v) {
+  const vs = (v.viajes||[]).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  let html = `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Historial de viajes</h3>
+    <button class="btn small" onclick="openModal('viaje','${v.id}')">+ Añadir</button>
+  </div><div class="sb-body">`;
+  if (!vs.length) html += `<div class="empty" style="padding:20px 0"><p>Sin viajes registrados</p></div>`;
+  else {
+    html += `<table class="hist-table"><thead><tr><th>Fecha</th><th>Destino</th><th>KM viaje</th><th>Descripción</th><th>Notas</th><th></th></tr></thead><tbody>`;
+    vs.forEach(vj => {
+      html += `<tr>
+        <td class="date">${fmtDate(vj.fecha)}</td>
+        <td><strong>${fmt(vj.destino)}</strong></td>
+        <td>${vj.km ? fmtKm(vj.km) : '—'}</td>
+        <td class="desc">${fmt(vj.descripcion)}</td>
+        <td class="desc">${fmt(vj.notas)}</td>
+        <td style="white-space:nowrap">
+          <button class="btn small" onclick="openModal('viaje','${v.id}','${vj.id}')">✎</button>
+          <button class="btn small danger" onclick="deleteItem('viajes','${v.id}','${vj.id}')">✕</button>
         </td></tr>`;
     });
     html += `</tbody></table>`;
@@ -1061,6 +1086,10 @@ function openModal(type, vehicleId, itemId) {
     title.textContent = editId?'Editar anotación':'Nueva anotación';
     const et = editId ? (v?.historial||[]).find(x=>x.id===editId) : {};
     body.innerHTML = buildHistorialForm(et||{});
+  } else if (type==='viaje') {
+    title.textContent = editId?'Editar viaje':'Nuevo viaje';
+    const et = editId ? (v?.viajes||[]).find(x=>x.id===editId) : {};
+    body.innerHTML = buildViajeForm(et||{});
   } else if (type==='perfil') {
     title.textContent = 'Mi perfil';
     body.innerHTML = buildPerfilForm(currentUser);
@@ -1129,6 +1158,11 @@ async function saveModal() {
     const obj={id:editId||uid(),fecha:val('h-fecha'),nota:val('h-nota')};
     if (editId) { const idx=v.historial.findIndex(x=>x.id===editId); if(idx>=0) v.historial[idx]=obj; }
     else v.historial.push(obj);
+  } else if (modalType==='viaje' && v) {
+    if (!v.viajes) v.viajes=[];
+    const obj={id:editId||uid(),fecha:val('vj-fecha'),destino:val('vj-destino'),descripcion:val('vj-descripcion'),km:val('vj-km'),notas:val('vj-notas')};
+    if (editId) { const idx=v.viajes.findIndex(x=>x.id===editId); if(idx>=0) v.viajes[idx]=obj; }
+    else v.viajes.push(obj);
   } else if (modalType==='perfil') {
     await savePerfil();
     return;
@@ -1244,6 +1278,23 @@ function buildHistorialForm(e) {
   return `
   <div class="form-row"><div class="form-group"><label>Fecha</label><input id="h-fecha" type="date" value="${e.fecha||today()}"></div></div>
   <div class="form-row"><div class="form-group"><label>Nota / Descripción</label><textarea id="h-nota" style="min-height:100px">${e.nota||''}</textarea></div></div>`;
+}
+
+function buildViajeForm(e) {
+  return `
+  <div class="form-row cols-2">
+    <div class="form-group"><label>Fecha</label><input id="vj-fecha" type="date" value="${e.fecha||today()}"></div>
+    <div class="form-group"><label>KM realizados en el viaje</label><input id="vj-km" type="number" value="${e.km||''}" placeholder="450"></div>
+  </div>
+  <div class="form-row"><div class="form-group">
+    <label>Destino</label><input id="vj-destino" value="${e.destino||''}" placeholder="Madrid, París…">
+  </div></div>
+  <div class="form-row"><div class="form-group">
+    <label>Descripción</label><input id="vj-descripcion" value="${e.descripcion||''}" placeholder="Viaje de trabajo, vacaciones…">
+  </div></div>
+  <div class="form-row"><div class="form-group">
+    <label>Notas</label><textarea id="vj-notas">${e.notas||''}</textarea>
+  </div></div>`;
 }
 
 function buildPerfilForm(u) {
