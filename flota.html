@@ -353,7 +353,7 @@ h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
 // CONFIG & STATE
 // ================================================================
 const FILE_NAME = 'flota_data_v2.json';
-const SCOPES = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata';
+const SCOPES = 'https://www.googleapis.com/auth/drive.file';
 const ADMIN_USER = 'idlm2010';
 
 let tokenClient = null;
@@ -429,11 +429,12 @@ function initGapi() {
     });
     setDriveStatus(false, 'Conectando…');
     // Auto-connect
+    // Always use select_account to avoid invalid_request on scope changes
     const exp = localStorage.getItem('gc_token_exp');
     if (exp && Date.now() < Number(exp)) {
       tokenClient.requestAccessToken({ prompt: '' });
     } else {
-      tokenClient.requestAccessToken({ prompt: 'consent' });
+      tokenClient.requestAccessToken({ prompt: 'select_account' });
     }
   } catch(e) {
     setDriveStatus(false, 'Error iniciando Google Auth');
@@ -477,13 +478,11 @@ async function findFile() {
 
 async function findOldFile() {
   const OLD_FILE = 'flota_vehiculos_v1.json';
-  for (const spaces of ['drive', 'appDataFolder']) {
-    try {
-      const list = await driveReq('GET',
-        `https://www.googleapis.com/drive/v3/files?q=name='${OLD_FILE}' and trashed=false&fields=files(id,name)&spaces=${spaces}`);
-      if (list.files && list.files.length > 0) return list.files[0].id;
-    } catch(e) {}
-  }
+  try {
+    const list = await driveReq('GET',
+      `https://www.googleapis.com/drive/v3/files?q=name='${OLD_FILE}' and trashed=false&fields=files(id,name)`);
+    if (list.files && list.files.length > 0) return list.files[0].id;
+  } catch(e) {}
   return null;
 }
 
