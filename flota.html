@@ -837,7 +837,7 @@ function renderVehiclePage() {
     <div><h2>${v.marca} ${v.modelo}</h2>
     <div class="subtitle">${v.tipo?v.tipo+' · ':''}${v.matricula||'Sin matrícula'} <span class="badge ${v.vendido?'danger':'ok'}" style="margin-left:8px">${v.vendido?'Vendido':'Activo'}</span></div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn small" onclick="openModal('vehiculo','${v.id}')">✎ Editar</button>
+      <button class="btn small" onclick="openModal('vehiculo','${v.id}','${v.id}')">✎ Editar</button>
       <button class="btn small danger" onclick="deleteVehicle('${v.id}')">✕ Eliminar</button>
     </div>
   </div><div class="content-body">`;
@@ -1034,9 +1034,10 @@ function openModal(type, vehicleId, itemId) {
   saveBtn.style.display = '';
 
   if (type==='vehiculo') {
-    title.textContent = editId?'Editar vehículo':'Nuevo vehículo';
-    const ev = editId ? DB.vehicles.find(x=>x.id===editId) : {};
-    body.innerHTML = buildVehiculoForm(ev||{});
+    // When editing, editId is the vehicle id
+    const evFound = editId ? DB.vehicles.find(x=>x.id===editId) : null;
+    title.textContent = evFound ? 'Editar vehículo' : 'Nuevo vehículo';
+    body.innerHTML = buildVehiculoForm(evFound || {});
   } else if (type==='venta') {
     title.textContent = 'Registrar venta';
     body.innerHTML = buildVentaForm(v||{});
