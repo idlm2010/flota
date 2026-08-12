@@ -350,10 +350,8 @@ h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
 // ================================================================
 // CONFIG & STATE
 // ================================================================
-const JSONBIN_ID  = '6a7b3fa1f5f4af5e2907c6ec';
-const JSONBIN_KEY = '$2a$10$UlnvXmhSTkU4kyslj7Y1cOWm9adhqRt4GJlcD83.sKxnMplaQL.Pq';
-const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_ID}`;
-const ADMIN_USER  = 'idlm2010';
+const FIREBASE_URL = 'https://flotacontrol-20fd9-default-rtdb.europe-west1.firebasedatabase.app';
+const ADMIN_USER   = 'idlm2010';
 
 let dbReady = false;
 
@@ -400,7 +398,7 @@ function myVehicles() {
 }
 
 // ================================================================
-// JSONBIN OPERATIONS
+// DATABASE OPERATIONS
 // ================================================================
 function setDriveStatus(ok, msg) {
   dbReady = ok;
@@ -411,18 +409,16 @@ function setDriveStatus(ok, msg) {
 async function loadDB() {
   showLoading('Cargando datos…');
   try {
-    const res = await fetch(JSONBIN_URL + '/latest', {
-      headers: { 'X-Master-Key': JSONBIN_KEY, 'X-Bin-Meta': 'false' }
-    });
+    const res = await fetch(FIREBASE_URL + '/db.json');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const raw = await res.json();
     DB = {
-      users:       raw.users       || [],
-      invitations: raw.invitations || [],
-      logs:        raw.logs        || [],
-      vehicles:    raw.vehicles    || []
+      users:       (raw && raw.users)       ? Object.values(raw.users)       : [],
+      invitations: (raw && raw.invitations) ? Object.values(raw.invitations) : [],
+      logs:        (raw && raw.logs)        ? raw.logs                        : [],
+      vehicles:    (raw && raw.vehicles)    ? Object.values(raw.vehicles)     : []
     };
-    // First run: create admin user and associate existing vehicles
+    // First run: create admin user
     if (DB.users.length === 0) {
       const adminId = 'admin001';
       const passHash = await sha256('1234');
@@ -441,6 +437,24 @@ async function loadDB() {
     setDriveStatus(false, 'Error de conexión: ' + e.message);
     hideLoading();
   }
+}
+
+async function saveDB() {
+  try {
+    // Convert arrays to objects for Firebase (Firebase doesn't support arrays natively)
+    const payload = {
+      users:       Object.fromEntries((DB.users||[]).map(u => [u.id, u])),
+      invitations: Object.fromEntries((DB.invitations||[]).map(i => [i.code, i])),
+      logs:        DB.logs || [],
+      vehicles:    Object.fromEntries((DB.vehicles||[]).map(v => [v.id, v]))
+    };
+    const res = await fetch(FIREBASE_URL + '/db.json', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+  } catch(e) { console.error('saveDB error:', e); }
 }
 
 // ================================================================
