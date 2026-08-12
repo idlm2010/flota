@@ -394,7 +394,27 @@ function hideLoading() { document.getElementById('loading-overlay').classList.re
 
 function myVehicles() {
   if (!currentUser) return [];
-  return (DB.vehicles || []).filter(v => v.userId === currentUser.id);
+  return (DB.vehicles || []).filter(v =>
+    v.userId === currentUser.id ||
+    (v.shares || []).some(s => s.userId === currentUser.id)
+  );
+}
+
+function isOwner(v) {
+  return v && v.userId === currentUser.id;
+}
+
+function shareMode(v) {
+  // Returns 'owner', 'editar', or 'ver'
+  if (!v) return null;
+  if (v.userId === currentUser.id) return 'owner';
+  const s = (v.shares || []).find(s => s.userId === currentUser.id);
+  return s ? s.modo : null;
+}
+
+function canEdit(v) {
+  const m = shareMode(v);
+  return m === 'owner' || m === 'editar';
 }
 
 // ================================================================
@@ -631,9 +651,11 @@ function renderSidebar() {
   myVehicles().forEach(v => {
     const div = document.createElement('div');
     div.className = 'vehicle-card' + (v.id === currentVehicleId ? ' active' : '');
-    div.innerHTML = `<div class="vc-name">${v.marca} ${v.modelo}</div>
+    const isShared = v.userId !== currentUser.id;
+    div.innerHTML = `<div class="vc-name">${v.marca} ${v.modelo}${isShared ? ' <span style="font-size:10px;color:var(--blue)">↗</span>' : ''}</div>
       <div class="vc-plate">${v.matricula||'—'}</div>
-      <span class="vc-status ${v.vendido?'vendido':'activo'}">${v.vendido?'Vendido':'Activo'}</span>`;
+      <span class="vc-status ${v.vendido?'vendido':'activo'}">${v.vendido?'Vendido':'Activo'}</span>
+      ${isShared ? `<span class="vc-status" style="background:rgba(91,155,213,0.15);color:var(--blue);margin-left:4px">${shareMode(v)==='editar'?'Editar':'Ver'}</span>` : ''}`;
     div.onclick = () => { currentVehicleId = v.id; renderAll(); showPage('vehiculo'); };
     vl.appendChild(div);
   });
@@ -718,10 +740,16 @@ function renderVehiclePage() {
 
   let html = `<div class="page-header">
     <div><h2>${v.marca} ${v.modelo}</h2>
-    <div class="subtitle">${v.tipo?v.tipo+' · ':''}${v.matricula||'Sin matrícula'} <span class="badge ${v.vendido?'danger':'ok'}" style="margin-left:8px">${v.vendido?'Vendido':'Activo'}</span></div></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn small" onclick="openModal('vehiculo','${v.id}','${v.id}')">✎ Editar</button>
-      <button class="btn small danger" onclick="deleteVehicle('${v.id}')">✕ Eliminar</button>
+    <div class="subtitle">${v.tipo?v.tipo+' · ':''}${v.matricula||'Sin matrícula'}
+      <span class="badge ${v.vendido?'danger':'ok'}" style="margin-left:8px">${v.vendido?'Vendido':'Activo'}</span>
+      ${!isOwner(v) ? `<span class="badge info" style="margin-left:6px">↗ Compartido contigo</span>` : ''}
+      ${isOwner(v) && (v.shares||[]).length > 0 ? `<span class="badge warn" style="margin-left:6px">↗ Compartido con ${v.shares.length} usuario${v.shares.length>1?'s':''}</span>` : ''}
+    </div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      ${!isOwner(v) ? `<span class="badge ${shareMode(v)==='editar'?'warn':'info'}" style="font-size:12px">
+        ${shareMode(v)==='editar'?'✎ Puedes editar':'👁 Solo lectura'}</span>` : ''}
+      ${canEdit(v) ? `<button class="btn small" onclick="openModal('vehiculo','${v.id}','${v.id}')">✎ Editar</button>` : ''}
+      ${isOwner(v) ? `<button class="btn small danger" onclick="deleteVehicle('${v.id}')">✕ Eliminar</button>` : ''}
     </div>
   </div><div class="content-body">`;
 
@@ -759,11 +787,11 @@ function renderVehiclePage() {
     </div></div>`;
   } else {
     html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Venta</h3>
-      <button class="btn small" onclick="openModal('venta','${v.id}')">+ Registrar venta</button>
+      ${isOwner(v) ? `<button class="btn small" onclick="openModal('venta','${v.id}')">+ Registrar venta</button>` : ''}
     </div><div class="sb-body"><div class="empty" style="padding:20px 0"><p>Vehículo no vendido todavía</p></div></div></div>`;
   }
 
-  html += renderSeguro(v) + renderTalleres(v) + renderITVs(v) + renderHistorial(v) + renderViajes(v);
+  html += renderShares(v) + renderSeguro(v) + renderTalleres(v) + renderITVs(v) + renderHistorial(v) + renderViajes(v);
   html += `</div>`;
   pg.innerHTML = html;
 }
@@ -772,7 +800,7 @@ function renderSeguro(v) {
   const s = v.seguro||{};
   const has = s.compania||s.poliza;
   let html = `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Seguro</h3>
-    <button class="btn small" onclick="openModal('seguro','${v.id}')">✎ ${has?'Editar':'Añadir'}</button>
+    ${canEdit(v) ? `<button class="btn small" onclick="openModal('seguro','${v.id}')">✎ ${has?'Editar':'Añadir'}</button>` : ''}
   </div><div class="sb-body">`;
   if (!has) { html += `<div class="empty" style="padding:20px 0"><p>Sin seguro registrado</p></div>`; }
   else {
@@ -790,8 +818,9 @@ function renderSeguro(v) {
 
 function renderTalleres(v) {
   const ts = (v.talleres||[]).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const canEditV_t = canEdit(v);
   let html = `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◈</span> Historial de taller</h3>
-    <button class="btn small" onclick="openModal('taller','${v.id}')">+ Añadir</button>
+    ${canEditV_t ? `<button class="btn small" onclick="openModal('taller','${v.id}')">+ Añadir</button>` : ''}
   </div><div class="sb-body">`;
   if (!ts.length) { html += `<div class="empty" style="padding:20px 0"><p>Sin entradas de taller</p></div>`; }
   else {
@@ -804,8 +833,8 @@ function renderTalleres(v) {
         <td class="date">${fmtDate(t.fecha)}</td><td>${fmt(t.taller)}</td><td>${fmtKm(t.km)}</td>
         <td class="amount">${fmtMoney(t.importe)}</td><td class="desc">${fmt(t.descripcion)}</td>
         <td style="white-space:nowrap">
-          <button class="btn small" onclick="openModal('taller','${v.id}','${t.id}')">✎</button>
-          <button class="btn small danger" onclick="deleteItem('talleres','${v.id}','${t.id}')">✕</button>
+          ${canEditV_t ? `<button class="btn small" onclick="openModal('taller','${v.id}','${t.id}')">✎</button>
+          <button class="btn small danger" onclick="deleteItem('talleres','${v.id}','${t.id}')">✕</button>` : ''}
         </td></tr>`;
       if (t.items&&t.items.length) html += `<tr><td colspan="6" style="padding:0 0 12px 0"><div style="background:var(--bg3);border-radius:8px;padding:12px;margin-top:-4px">${detHtml}</div></td></tr>`;
     });
@@ -816,8 +845,9 @@ function renderTalleres(v) {
 
 function renderITVs(v) {
   const its = (v.itvs||[]).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const canEditV_i = canEdit(v);
   let html = `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Historial de ITV</h3>
-    <button class="btn small" onclick="openModal('itv','${v.id}')">+ Añadir</button>
+    ${canEditV_i ? `<button class="btn small" onclick="openModal('itv','${v.id}')">+ Añadir</button>` : ''}
   </div><div class="sb-body">`;
   if (!its.length) html += `<div class="empty" style="padding:20px 0"><p>Sin ITV registradas</p></div>`;
   else {
@@ -836,8 +866,8 @@ function renderITVs(v) {
         <td class="amount">${fmtMoney(it.importe)}</td>
         <td class="desc">${fmt(it.observaciones)}</td>
         <td style="white-space:nowrap">
-          <button class="btn small" onclick="openModal('itv','${v.id}','${it.id}')">✎</button>
-          <button class="btn small danger" onclick="deleteItem('itvs','${v.id}','${it.id}')">✕</button>
+          ${canEditV_i ? `<button class="btn small" onclick="openModal('itv','${v.id}','${it.id}')">✎</button>
+          <button class="btn small danger" onclick="deleteItem('itvs','${v.id}','${it.id}')">✕</button>` : ''}
         </td></tr>`;
     });
     html += `</tbody></table>`;
@@ -847,8 +877,9 @@ function renderITVs(v) {
 
 function renderHistorial(v) {
   const hs = (v.historial||[]).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const canEditV_h = canEdit(v);
   let html = `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Historial del vehículo</h3>
-    <button class="btn small" onclick="openModal('historial','${v.id}')">+ Anotar</button>
+    ${canEditV_h ? `<button class="btn small" onclick="openModal('historial','${v.id}')">+ Anotar</button>` : ''}
   </div><div class="sb-body">`;
   if (!hs.length) html += `<div class="empty" style="padding:20px 0"><p>Sin anotaciones</p></div>`;
   else {
@@ -856,8 +887,8 @@ function renderHistorial(v) {
     hs.forEach(h => {
       html += `<tr><td class="date" style="width:110px">${fmtDate(h.fecha)}</td><td>${h.nota||'—'}</td>
         <td style="white-space:nowrap">
-          <button class="btn small" onclick="openModal('historial','${v.id}','${h.id}')">✎</button>
-          <button class="btn small danger" onclick="deleteItem('historial','${v.id}','${h.id}')">✕</button>
+          ${canEditV_h ? `<button class="btn small" onclick="openModal('historial','${v.id}','${h.id}')">✎</button>
+          <button class="btn small danger" onclick="deleteItem('historial','${v.id}','${h.id}')">✕</button>` : ''}
         </td></tr>`;
     });
     html += `</tbody></table>`;
@@ -867,8 +898,9 @@ function renderHistorial(v) {
 
 function renderViajes(v) {
   const vs = (v.viajes||[]).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const canEditV_v = canEdit(v);
   let html = `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Historial de viajes</h3>
-    <button class="btn small" onclick="openModal('viaje','${v.id}')">+ Añadir</button>
+    ${canEditV_v ? `<button class="btn small" onclick="openModal('viaje','${v.id}')">+ Añadir</button>` : ''}
   </div><div class="sb-body">`;
   if (!vs.length) html += `<div class="empty" style="padding:20px 0"><p>Sin viajes registrados</p></div>`;
   else {
@@ -890,8 +922,8 @@ function renderViajes(v) {
               ${mapBtns ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${mapBtns}</div>` : ''}
             </div>
             <div style="display:flex;gap:6px;flex-shrink:0">
-              <button class="btn small" onclick="openModal('viaje','${v.id}','${vj.id}')">✎</button>
-              <button class="btn small danger" onclick="deleteItem('viajes','${v.id}','${vj.id}')">✕</button>
+              ${canEditV_v ? `<button class="btn small" onclick="openModal('viaje','${v.id}','${vj.id}')">✎</button>
+              <button class="btn small danger" onclick="deleteItem('viajes','${v.id}','${vj.id}')">✕</button>` : ''}
             </div>
           </div>
         </div>`;
@@ -900,6 +932,60 @@ function renderViajes(v) {
     html = html.replace(/border-bottom:1px solid var\(--border\)(?!.*border-bottom:1px solid var\(--border\))/, 'border-bottom:none');
   }
   return html+'</div></div>';
+}
+
+// ================================================================
+// SHARES
+// ================================================================
+function renderShares(v) {
+  if (!isOwner(v)) return '';
+  const shares = v.shares || [];
+  let html = `<div class="section-block"><div class="sb-header">
+    <h3><span class="sb-icon">↗</span> Compartido con</h3>
+    <button class="btn small" onclick="openModal('share','${v.id}')">+ Compartir</button>
+  </div><div class="sb-body">`;
+
+  if (!shares.length) {
+    html += `<div class="empty" style="padding:16px 0"><p>Este vehículo no está compartido con nadie</p></div>`;
+  } else {
+    html += `<table class="hist-table"><thead><tr>
+      <th>Usuario</th><th>Nombre</th><th>Permiso</th><th></th>
+    </tr></thead><tbody>`;
+    shares.forEach(s => {
+      const u = DB.users.find(u => u.id === s.userId);
+      html += `<tr>
+        <td style="font-family:'Syne'">${s.username}</td>
+        <td>${u ? u.nombre : '—'}</td>
+        <td>
+          <select onchange="changeShareMode('${v.id}','${s.userId}',this.value)"
+            style="background:var(--bg3);border:1px solid var(--border2);color:var(--text);padding:4px 8px;border-radius:6px;font-family:'DM Sans';font-size:12px">
+            <option value="ver"    ${s.modo==='ver'   ?'selected':''}>👁 Solo ver</option>
+            <option value="editar" ${s.modo==='editar'?'selected':''}>✎ Editar</option>
+          </select>
+        </td>
+        <td><button class="btn small danger" onclick="revokeShare('${v.id}','${s.userId}')">Revocar</button></td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  return html + '</div></div>';
+}
+
+async function changeShareMode(vehicleId, userId, modo) {
+  const v = DB.vehicles.find(x => x.id === vehicleId);
+  if (!v) return;
+  const s = (v.shares || []).find(s => s.userId === userId);
+  if (s) { s.modo = modo; await saveDB(); }
+}
+
+async function revokeShare(vehicleId, userId) {
+  if (!confirm('¿Revocar el acceso de este usuario?')) return;
+  const v = DB.vehicles.find(x => x.id === vehicleId);
+  if (!v) return;
+  v.shares = (v.shares || []).filter(s => s.userId !== userId);
+  await saveDB();
+  renderAll();
+  showPage('vehiculo');
 }
 
 // ================================================================
@@ -996,6 +1082,10 @@ function openModal(type, vehicleId, itemId) {
     title.textContent = editId?'Editar viaje':'Nuevo viaje';
     const et = editId ? (v?.viajes||[]).find(x=>x.id===editId) : {};
     body.innerHTML = buildViajeForm(et||{});
+  } else if (type==='share') {
+    title.textContent = 'Compartir vehículo';
+    body.innerHTML = buildShareForm(v);
+    document.getElementById('modal-save-btn').style.display = 'none';
   } else if (type==='perfil') {
     title.textContent = 'Mi perfil';
     body.innerHTML = buildPerfilForm(currentUser);
@@ -1019,6 +1109,11 @@ async function saveModal() {
   const v = myVehicles().find(x=>x.id===currentVehicleId);
 
   if (modalType==='vehiculo') {
+    // Guard: only owner can save vehicle edits
+    if (editId) {
+      const ev = DB.vehicles.find(x=>x.id===editId);
+      if (ev && !isOwner(ev)) { alert('No tienes permiso para editar este vehículo'); closeModal(); return; }
+    }
     const obj = {
       id: editId||uid(), userId: currentUser.id,
       tipo:val('v-tipo'), marca:val('v-marca'), modelo:val('v-modelo'),
@@ -1026,7 +1121,7 @@ async function saveModal() {
       revisionKm:val('v-revisionKm'), presionDel:val('v-presionDel'), presionTras:val('v-presionTras'),
       fechaCompra:val('v-fechaCompra'), kmCompra:val('v-kmCompra'), importeCompra:val('v-importeCompra'),
       vendedor:val('v-vendedor'), notasCompra:val('v-notasCompra'),
-      talleres:[], itvs:[], historial:[], viajes:[], seguro:{}
+      talleres:[], itvs:[], historial:[], viajes:[], shares:[], seguro:{}
     };
     if (!obj.marca) { alert('La marca es obligatoria'); return; }
     if (editId) {
@@ -1036,6 +1131,7 @@ async function saveModal() {
         obj.itvs=DB.vehicles[idx].itvs||[];
         obj.historial=DB.vehicles[idx].historial||[];
         obj.viajes=DB.vehicles[idx].viajes||[];
+        obj.shares=DB.vehicles[idx].shares||[];
         obj.seguro=DB.vehicles[idx].seguro||{};
         obj.vendido=DB.vehicles[idx].vendido;
         obj.fechaVenta=DB.vehicles[idx].fechaVenta;
@@ -1083,6 +1179,8 @@ async function saveModal() {
 }
 
 function deleteVehicle(id) {
+  const dv = DB.vehicles.find(x=>x.id===id);
+  if (dv && !isOwner(dv)) { alert('Solo el propietario puede eliminar este vehículo'); return; }
   if (!confirm('¿Eliminar este vehículo y todos sus datos?')) return;
   DB.vehicles = DB.vehicles.filter(x=>x.id!==id);
   currentVehicleId = null;
@@ -1218,6 +1316,80 @@ function buildViajeForm(e) {
   <hr class="form-sep">
   <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">URLs de Google Maps (hasta 5 rutas)</div>
   ${urlFields}`;
+}
+
+function buildShareForm(v) {
+  const shares = v ? (v.shares || []) : [];
+  const sharedIds = shares.map(s => s.userId);
+  // Get all users except owner and already shared
+  const available = DB.users.filter(u => u.id !== currentUser.id && !sharedIds.includes(u.id));
+
+  let html = `<div style="margin-bottom:16px">
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">Añadir usuario</div>`;
+
+  if (!available.length) {
+    html += `<p style="font-size:13px;color:var(--text2)">No hay más usuarios disponibles para compartir.</p>`;
+  } else {
+    html += `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+      <div class="form-group" style="flex:1;min-width:140px">
+        <label>Usuario</label>
+        <select id="share-user" style="width:100%">
+          <option value="">— Selecciona —</option>
+          ${available.map(u => `<option value="${u.id}">${u.username} (${u.nombre})</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group" style="min-width:120px">
+        <label>Permiso</label>
+        <select id="share-modo" style="width:100%">
+          <option value="ver">👁 Solo ver</option>
+          <option value="editar">✎ Editar</option>
+        </select>
+      </div>
+      <button class="btn primary" onclick="addShare('${v ? v.id : ''}')">Compartir</button>
+    </div>`;
+  }
+  html += `</div>`;
+
+  if (shares.length) {
+    html += `<hr class="form-sep">
+    <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">Accesos activos</div>
+    <table class="hist-table"><thead><tr><th>Usuario</th><th>Permiso</th><th></th></tr></thead><tbody>`;
+    shares.forEach(s => {
+      html += `<tr>
+        <td style="font-family:'Syne'">${s.username}</td>
+        <td><span class="badge ${s.modo==='editar'?'warn':'info'}">${s.modo==='editar'?'✎ Editar':'👁 Ver'}</span></td>
+        <td><button class="btn small danger" onclick="revokeShareFromModal('${v.id}','${s.userId}')">Revocar</button></td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+  }
+  return html;
+}
+
+async function addShare(vehicleId) {
+  const userId = document.getElementById('share-user').value;
+  const modo   = document.getElementById('share-modo').value;
+  if (!userId) { alert('Selecciona un usuario'); return; }
+  const v = DB.vehicles.find(x => x.id === vehicleId);
+  const u = DB.users.find(x => x.id === userId);
+  if (!v || !u) return;
+  if (!v.shares) v.shares = [];
+  if (v.shares.find(s => s.userId === userId)) { alert('Este usuario ya tiene acceso'); return; }
+  v.shares.push({ userId, username: u.username, modo });
+  await saveDB();
+  // Refresh modal content
+  document.getElementById('modal-body').innerHTML = buildShareForm(v);
+  renderAll();
+}
+
+async function revokeShareFromModal(vehicleId, userId) {
+  if (!confirm('¿Revocar el acceso de este usuario?')) return;
+  const v = DB.vehicles.find(x => x.id === vehicleId);
+  if (!v) return;
+  v.shares = (v.shares || []).filter(s => s.userId !== userId);
+  await saveDB();
+  document.getElementById('modal-body').innerHTML = buildShareForm(v);
+  renderAll();
 }
 
 function buildPerfilForm(u) {
