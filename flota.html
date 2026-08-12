@@ -429,8 +429,8 @@ async function loadDB() {
     };
     console.log('DB loaded — users:', DB.users.length, 'vehicles:', DB.vehicles.length);
 
-    // First run: create admin user
-    if (DB.users.length === 0) {
+    // First run: only create admin if truly empty (no users AND no vehicles)
+    if (DB.users.length === 0 && DB.vehicles.length === 0) {
       const adminId = 'admin001';
       const passHash = await sha256('1234');
       DB.users.push({
@@ -438,7 +438,6 @@ async function loadDB() {
         email: 'idlm2010@gmail.com', passHash,
         fechaAlta: today(), role: 'admin'
       });
-      DB.vehicles = DB.vehicles.map(v => ({...v, userId: v.userId || adminId}));
       await saveDB();
     }
     setDriveStatus(true, 'Base de datos conectada ✓');
