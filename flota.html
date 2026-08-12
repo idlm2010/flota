@@ -412,12 +412,23 @@ async function loadDB() {
     const res = await fetch(FIREBASE_URL + '/db.json');
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const raw = await res.json();
+    console.log('Firebase raw:', JSON.stringify(raw).slice(0, 300));
+
+    // Firebase puede devolver arrays nativos o objetos con claves
+    function toArray(val) {
+      if (!val) return [];
+      if (Array.isArray(val)) return val.filter(Boolean);
+      return Object.values(val);
+    }
+
     DB = {
-      users:       (raw && raw.users)       ? Object.values(raw.users)       : [],
-      invitations: (raw && raw.invitations) ? Object.values(raw.invitations) : [],
-      logs:        (raw && raw.logs)        ? raw.logs                        : [],
-      vehicles:    (raw && raw.vehicles)    ? Object.values(raw.vehicles)     : []
+      users:       toArray(raw && raw.users),
+      invitations: toArray(raw && raw.invitations),
+      logs:        Array.isArray(raw && raw.logs) ? raw.logs : [],
+      vehicles:    toArray(raw && raw.vehicles)
     };
+    console.log('DB loaded — users:', DB.users.length, 'vehicles:', DB.vehicles.length);
+
     // First run: create admin user
     if (DB.users.length === 0) {
       const adminId = 'admin001';
