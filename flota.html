@@ -766,12 +766,13 @@ function renderDashboard() {
     let kmYearTxt = '—';
     (function() {
       // Collect all points with km+date from all sources
+      const fechaCompraLimit = v.fechaCompra ? new Date(v.fechaCompra+'T12:00:00') : new Date(0);
       const raw = [
         ...(v.itvs||[]).map(x=>({km:Number(x.km)||0, d:new Date(x.fecha+'T12:00:00'), src:'itv'})),
         ...(v.talleres||[]).map(x=>({km:Number(x.km)||0, d:new Date(x.fecha+'T12:00:00'), src:'taller'})),
         ...(v.historial||[]).map(x=>({km:Number(x.km)||0, d:new Date(x.fecha+'T12:00:00'), src:'hist'})),
         ...(v.viajes||[]).map(x=>({km:Number(x.kmSalida)||0, d:new Date(x.fecha+'T12:00:00'), src:'viaje'})),
-      ].filter(p => p.km > 0);
+      ].filter(p => p.km > 0 && p.d >= fechaCompraLimit);
 
       // Sort by date, remove points where km goes backwards
       const pts = raw.sort((a,b)=>a.d-b.d).reduce((acc,p) => {
