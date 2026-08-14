@@ -1155,6 +1155,9 @@ async function saveModal() {
       revisionKm:val('v-revisionKm'), presionDel:val('v-presionDel'), presionTras:val('v-presionTras'),
       fechaCompra:val('v-fechaCompra'), kmCompra:val('v-kmCompra'), importeCompra:val('v-importeCompra'),
       vendedor:val('v-vendedor'), notasCompra:val('v-notasCompra'),
+      vendido: !!val('v-fechaVenta'),
+      fechaVenta:val('v-fechaVenta'), kmVenta:val('v-kmVenta'),
+      comprador:val('v-comprador'), notasVenta:val('v-notasVenta'),
       talleres:[], itvs:[], historial:[], viajes:[], shares:[], seguro:{}
     };
     if (!obj.marca) { alert('La marca es obligatoria'); return; }
@@ -1167,11 +1170,7 @@ async function saveModal() {
         obj.viajes=DB.vehicles[idx].viajes||[];
         obj.shares=DB.vehicles[idx].shares||[];
         obj.seguro=DB.vehicles[idx].seguro||{};
-        obj.vendido=DB.vehicles[idx].vendido;
-        obj.fechaVenta=DB.vehicles[idx].fechaVenta;
-        obj.kmVenta=DB.vehicles[idx].kmVenta;
-        obj.comprador=DB.vehicles[idx].comprador;
-        obj.notasVenta=DB.vehicles[idx].notasVenta;
+        // venta fields now come from the form directly via obj
         DB.vehicles[idx]=obj;
       }
     } else { DB.vehicles.push(obj); currentVehicleId=obj.id; }
@@ -1253,6 +1252,7 @@ function buildVehiculoForm(e) {
     <div class="form-group"><label>Presión neumático trasero (bar)</label><input id="v-presionTras" type="number" step="0.1" value="${e.presionTras||''}" placeholder="2.4"></div>
   </div>
   <hr class="form-sep">
+  <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Compra</div>
   <div class="form-row cols-2">
     <div class="form-group"><label>Fecha de compra</label><input id="v-fechaCompra" type="date" value="${e.fechaCompra||today()}"></div>
     <div class="form-group"><label>KM al comprar</label><input id="v-kmCompra" type="number" value="${e.kmCompra||''}"></div>
@@ -1261,7 +1261,15 @@ function buildVehiculoForm(e) {
     <div class="form-group"><label>Importe (€)</label><input id="v-importeCompra" type="number" step="0.01" value="${e.importeCompra||''}"></div>
     <div class="form-group"><label>Vendedor</label><input id="v-vendedor" value="${e.vendedor||''}"></div>
   </div>
-  <div class="form-row"><div class="form-group"><label>Notas de compra</label><textarea id="v-notasCompra">${e.notasCompra||''}</textarea></div></div>`;
+  <div class="form-row"><div class="form-group"><label>Notas de compra</label><textarea id="v-notasCompra">${e.notasCompra||''}</textarea></div></div>
+  <hr class="form-sep">
+  <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px">Venta <span style="font-weight:400;font-style:italic">(dejar vacío si no está vendido)</span></div>
+  <div class="form-row cols-2">
+    <div class="form-group"><label>Fecha de venta</label><input id="v-fechaVenta" type="date" value="${e.fechaVenta||''}"></div>
+    <div class="form-group"><label>KM a la venta</label><input id="v-kmVenta" type="number" value="${e.kmVenta||''}"></div>
+  </div>
+  <div class="form-row"><div class="form-group"><label>Comprador</label><input id="v-comprador" value="${e.comprador||''}"></div></div>
+  <div class="form-row"><div class="form-group"><label>Notas de venta</label><textarea id="v-notasVenta">${e.notasVenta||''}</textarea></div></div>`;
 }
 
 function buildVentaForm(e) {
