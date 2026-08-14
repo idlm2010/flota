@@ -762,23 +762,65 @@ function renderDashboard() {
     const segDays = segVenc ? Math.round((new Date(segVenc+'T12:00:00')-new Date())/(1000*60*60*24)) : null;
     const segTxt = segVenc ? `<span class="badge ${segDays<0?'danger':segDays<30?'danger':segDays<90?'warn':'ok'}">${segDays<0?'Vencido':fmtDate(segVenc)}</span>` : '—';
 
-    // KM/year: take all km+date points, sort by date, compute (maxKm-minKm)/years
-    const allPoints = [
-      ...(v.itvs||[]).map(x=>({km:Number(x.km)||0,   d:x.fecha})),
-      ...(v.talleres||[]).map(x=>({km:Number(x.km)||0, d:x.fecha})),
-      ...(v.historial||[]).map(x=>({km:Number(x.km)||0,d:x.fecha})),
-      ...(v.viajes||[]).map(x=>({km:Number(x.kmSalida)||0,d:x.fecha})),
-      {km:Number(v.kmCompra)||0, d:v.fechaCompra}
-    ].filter(p=>p.km>0&&p.d).sort((a,b)=>new Date(a.d)-new Date(b.d));
+    // KM/year: weighted average by tramos, recent tramos weight more
     let kmYearTxt = '—';
-    if (allPoints.length >= 2) {
-      const first = allPoints[0], last = allPoints[allPoints.length-1];
-      const years = (new Date(last.d)-new Date(first.d))/(1000*60*60*24*365.25);
-      if (years > 0.08) { // at least ~1 month of data
-        const kmYear = Math.round((last.km - first.km) / years);
-        kmYearTxt = kmYear.toLocaleString('es-ES') + ' km/año';
+    (function() {
+      // Collect all points with km+date from all sources
+      const raw = [
+        ...(v.itvs||[]).map(x=>({km:Number(x.km)||0, d:new Date(x.fecha+'T12:00:00'), src:'itv'})),
+        ...(v.talleres||[]).map(x=>({km:Number(x.km)||0, d:new Date(x.fecha+'T12:00:00'), src:'taller'})),
+        ...(v.historial||[]).map(x=>({km:Number(x.km)||0, d:new Date(x.fecha+'T12:00:00'), src:'hist'})),
+        ...(v.viajes||[]).map(x=>({km:Number(x.kmSalida)||0, d:new Date(x.fecha+'T12:00:00'), src:'viaje'})),
+      ].filter(p => p.km > 0);
+
+      // Sort by date, remove points where km goes backwards
+      const pts = raw.sort((a,b)=>a.d-b.d).reduce((acc,p) => {
+        if (!acc.length || p.km > acc[acc.length-1].km) acc.push(p);
+        return acc;
+      }, []);
+
+      if (pts.length < 2) {
+        // Fallback: single point vs km compra
+        if (pts.length === 1 && v.kmCompra && v.fechaCompra) {
+          const start = {km:Number(v.kmCompra), d:new Date(v.fechaCompra+'T12:00:00')};
+          if (pts[0].km > start.km) {
+            const years = (pts[0].d - start.d)/(1000*60*60*24*365.25);
+            if (years > 0.08) kmYearTxt = Math.round((pts[0].km-start.km)/years).toLocaleString('es-ES') + ' km/año*';
+          }
+        }
+        return;
       }
-    }
+
+      // Build tramos between consecutive points
+      const now = new Date();
+      const tramos = [];
+      for (let i = 1; i < pts.length; i++) {
+        const days = (pts[i].d - pts[i-1].d)/(1000*60*60*24);
+        const kmDay = days > 0 ? (pts[i].km - pts[i-1].km) / days : 0;
+        if (kmDay > 0) {
+          // Age of this tramo in years (from midpoint to now)
+          const mid = new Date((pts[i-1].d.getTime()+pts[i].d.getTime())/2);
+          const ageYears = (now - mid)/(1000*60*60*24*365.25);
+          // Exponential decay weight: recent tramos weight more
+          // Half-life = 2 years → weight = e^(-0.35 * ageYears)
+          const weight = Math.exp(-0.35 * ageYears) * days; // also weight by duration
+          tramos.push({kmDay, weight, days, ageYears});
+        }
+      }
+
+      if (!tramos.length) return;
+
+      const totalWeight = tramos.reduce((s,t)=>s+t.weight, 0);
+      const wmKmDay = tramos.reduce((s,t)=>s+t.kmDay*t.weight, 0) / totalWeight;
+      const kmYear = Math.round(wmKmDay * 365.25);
+
+      // Check if most recent point is < 6 months old
+      const lastPt = pts[pts.length-1];
+      const lastAgeDays = (now - lastPt.d)/(1000*60*60*24);
+      const estimated = lastAgeDays > 180; // data older than 6 months → mark as estimated
+
+      kmYearTxt = kmYear.toLocaleString('es-ES') + ' km/año' + (estimated ? '*' : '');
+    })();
 
     html += `<tr style="cursor:pointer" onclick="currentVehicleId='${v.id}';renderAll();showPage('vehiculo')">
       <td><strong>${v.marca} ${v.modelo}</strong></td>
