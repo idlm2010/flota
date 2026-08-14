@@ -733,7 +733,7 @@ function renderDashboard() {
     const itvDays = itvVenc ? Math.round((new Date(itvVenc.vencimiento+'T12:00:00')-new Date())/(1000*60*60*24)) : null;
     const itvTxt = itvVenc ? `<span class="badge ${itvDays<0?'danger':itvDays<30?'danger':itvDays<90?'warn':'ok'}">${itvDays<0?'Vencida':fmtDate(itvVenc.vencimiento)}</span>` : '—';
 
-    // Next taller: revisionKm vs lastKm
+    // Next taller: revisionKm vs lastKm + estimated date
     let tallerTxt = '—';
     if (v.revisionKm && kmSources.length) {
       const lastN = kmSources[0].km;
@@ -741,7 +741,20 @@ function renderDashboard() {
       const done = Math.floor(lastN/rev)*rev;
       const next = done + rev;
       const remain = next - lastN;
-      tallerTxt = `<span class="badge ${remain<500?'danger':remain<2000?'warn':'info'}">en ${fmtKm(remain)}</span>`;
+      // Estimate date: calculate avg km/day from taller history
+      const talleresSorted = (v.talleres||[]).filter(t=>t.km&&t.fecha).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+      let estDateTxt = '';
+      if (talleresSorted.length >= 2) {
+        const first = talleresSorted[0], last = talleresSorted[talleresSorted.length-1];
+        const days = (new Date(last.fecha)-new Date(first.fecha))/(1000*60*60*24);
+        const kmDay = days > 0 ? (Number(last.km)-Number(first.km))/days : 0;
+        if (kmDay > 0) {
+          const daysLeft = Math.round(remain/kmDay);
+          const estDate = new Date(); estDate.setDate(estDate.getDate()+daysLeft);
+          estDateTxt = ' · ' + estDate.toLocaleDateString('es-ES',{month:'short',year:'numeric'});
+        }
+      }
+      tallerTxt = `<span class="badge ${remain<500?'danger':remain<2000?'warn':'info'}">en ${fmtKm(remain)}${estDateTxt}</span>`;
     }
 
     // Seguro vencimiento
@@ -800,24 +813,16 @@ function renderVehiclePage() {
       <div class="info-item"><div class="lbl">Presión trasera</div><div class="val">${v.presionTras?v.presionTras+' bar':'—'}</div></div>
     </div></div></div>`;
 
-  // Compra/venta info shown inside the datos section compactly
-  html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Compra y venta</h3>
-    ${canEdit(v) && !v.vendido && isOwner(v) ? `<button class="btn small" onclick="openModal('venta','${v.id}')">+ Registrar venta</button>` : ''}
-    ${canEdit(v) ? `<button class="btn small" onclick="openModal('compraNota','${v.id}')">✎ Editar</button>` : ''}
-  </div><div class="sb-body">
-    <div class="info-grid">
-      <div class="info-item"><div class="lbl">Fecha compra</div><div class="val">${fmtDate(v.fechaCompra)}</div></div>
-      <div class="info-item"><div class="lbl">KM al comprar</div><div class="val">${fmtKm(v.kmCompra)}</div></div>
-      <div class="info-item"><div class="lbl">Importe compra</div><div class="val">${fmtMoney(v.importeCompra)}</div></div>
-      <div class="info-item"><div class="lbl">Vendedor</div><div class="val">${fmt(v.vendedor)}</div></div>
-      ${v.vendido ? `
-      <div class="info-item"><div class="lbl">Fecha venta</div><div class="val">${fmtDate(v.fechaVenta)}</div></div>
-      <div class="info-item"><div class="lbl">KM a la venta</div><div class="val">${fmtKm(v.kmVenta)}</div></div>
-      <div class="info-item"><div class="lbl">Comprador</div><div class="val">${fmt(v.comprador)}</div></div>` : ''}
-    </div>
-    ${v.notasCompra?`<div style="margin-top:10px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2)"><strong style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:0.8px">Notas compra</strong><br>${v.notasCompra}</div>`:''}
-    ${v.vendido && v.notasVenta?`<div style="margin-top:8px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2)"><strong style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:0.8px">Notas venta</strong><br>${v.notasVenta}</div>`:''}
-  </div></div>`;
+  if (!v.vendido && isOwner(v)) {
+    html += `<div style="text-align:right;padding:0 0 4px 0">
+      <button class="btn small" onclick="openModal('venta','${v.id}')">+ Registrar venta</button>
+    </div>`;
+  }
+  if (v.vendido) {
+    html += `<div style="margin-bottom:16px;padding:10px 16px;background:rgba(232,84,71,0.08);border:1px solid rgba(232,84,71,0.2);border-radius:10px;font-size:13px;color:var(--red);display:flex;align-items:center;gap:10px">
+      <span>🔴</span><span>Vendido el ${fmtDate(v.fechaVenta)} a ${fmt(v.comprador)} · ${fmtKm(v.kmVenta)}</span>
+    </div>`;
+  }
 
   html += renderShares(v) + renderSeguro(v) + renderTalleres(v) + renderITVs(v) + renderHistorial(v) + renderViajes(v);
   html += `</div>`;
