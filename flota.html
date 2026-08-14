@@ -682,7 +682,6 @@ function renderDashboard() {
   const veh = myVehicles();
   const activos = veh.filter(v=>!v.vendido).length;
   const totalGasto = veh.reduce((s,v)=>s+(v.talleres||[]).reduce((st,t)=>st+(Number(t.importe)||0),0),0);
-  const totalCompra = veh.reduce((s,v)=>s+(Number(v.importeCompra)||0),0);
   const now = new Date();
   const itvAlertas = veh.filter(v => {
     if (v.vendido) return false;
@@ -701,11 +700,12 @@ function renderDashboard() {
     pg.innerHTML = html; return;
   }
 
+  const segsVencidos = veh.filter(v=>{ const s=v.seguro&&v.seguro.vencimiento; return s && new Date(s+'T12:00:00')<new Date(); }).length;
   html += `<div class="dash-stats">
     <div class="stat-card"><div class="sc-val">${activos}</div><div class="sc-lbl">Activos</div></div>
-    <div class="stat-card"><div class="sc-val">${veh.length}</div><div class="sc-lbl">Total</div></div>
+    <div class="stat-card"><div class="sc-val">${veh.length}</div><div class="sc-lbl">Total flota</div></div>
     <div class="stat-card"><div class="sc-val">${totalGasto.toLocaleString('es-ES',{style:'currency',currency:'EUR'})}</div><div class="sc-lbl">Gasto taller</div></div>
-    <div class="stat-card"><div class="sc-val">${totalCompra.toLocaleString('es-ES',{style:'currency',currency:'EUR'})}</div><div class="sc-lbl">Inversión</div></div>
+    <div class="stat-card"><div class="sc-val" style="color:${segsVencidos>0?'var(--red)':'var(--accent)'}">${segsVencidos}</div><div class="sc-lbl">Seguros vencidos</div></div>
   </div>`;
 
   itvAlertas.forEach(v => {
@@ -714,15 +714,49 @@ function renderDashboard() {
   });
 
   html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◈</span> Vehículos</h3></div><div class="sb-body">
-    <table class="hist-table"><thead><tr><th>Vehículo</th><th>Matrícula</th><th>Tipo</th><th>Compra</th><th>Gasto taller</th><th>Estado</th></tr></thead><tbody>`;
+    <table class="hist-table"><thead><tr>
+      <th>Vehículo</th><th>Matrícula</th><th>Tipo</th><th>Últimos KM</th>
+      <th>Próx. ITV</th><th>Próx. taller</th><th>Vence seguro</th><th>Estado</th>
+    </tr></thead><tbody>`;
   veh.forEach(v => {
-    const gt = (v.talleres||[]).reduce((s,t)=>s+(Number(t.importe)||0),0);
+    // Last km registered across all sources
+    const kmSources = [
+      ...(v.itvs||[]).map(x=>({km:Number(x.km)||0,fecha:x.fecha})),
+      ...(v.talleres||[]).map(x=>({km:Number(x.km)||0,fecha:x.fecha})),
+      ...(v.historial||[]).map(x=>({km:Number(x.km)||0,fecha:x.fecha})),
+      ...(v.viajes||[]).map(x=>({km:Number(x.kmSalida)||0,fecha:x.fecha}))
+    ].filter(x=>x.km>0).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+    const lastKm = kmSources.length ? fmtKm(kmSources[0].km) : '—';
+
+    // Next ITV (from vencimiento field)
+    const itvVenc = (v.itvs||[]).filter(x=>x.vencimiento).sort((a,b)=>new Date(b.vencimiento)-new Date(a.vencimiento))[0];
+    const itvDays = itvVenc ? Math.round((new Date(itvVenc.vencimiento+'T12:00:00')-new Date())/(1000*60*60*24)) : null;
+    const itvTxt = itvVenc ? `<span class="badge ${itvDays<0?'danger':itvDays<30?'danger':itvDays<90?'warn':'ok'}">${itvDays<0?'Vencida':fmtDate(itvVenc.vencimiento)}</span>` : '—';
+
+    // Next taller: revisionKm vs lastKm
+    let tallerTxt = '—';
+    if (v.revisionKm && kmSources.length) {
+      const lastN = kmSources[0].km;
+      const rev = Number(v.revisionKm);
+      const done = Math.floor(lastN/rev)*rev;
+      const next = done + rev;
+      const remain = next - lastN;
+      tallerTxt = `<span class="badge ${remain<500?'danger':remain<2000?'warn':'info'}">en ${fmtKm(remain)}</span>`;
+    }
+
+    // Seguro vencimiento
+    const segVenc = v.seguro && v.seguro.vencimiento;
+    const segDays = segVenc ? Math.round((new Date(segVenc+'T12:00:00')-new Date())/(1000*60*60*24)) : null;
+    const segTxt = segVenc ? `<span class="badge ${segDays<0?'danger':segDays<30?'danger':segDays<90?'warn':'ok'}">${segDays<0?'Vencido':fmtDate(segVenc)}</span>` : '—';
+
     html += `<tr style="cursor:pointer" onclick="currentVehicleId='${v.id}';renderAll();showPage('vehiculo')">
       <td><strong>${v.marca} ${v.modelo}</strong></td>
       <td style="font-family:'Syne';letter-spacing:1px;color:var(--accent)">${fmt(v.matricula)}</td>
       <td><span class="badge info">${fmt(v.tipo)}</span></td>
-      <td>${fmtMoney(v.importeCompra)}</td>
-      <td>${fmtMoney(gt)}</td>
+      <td>${lastKm}</td>
+      <td>${itvTxt}</td>
+      <td>${tallerTxt}</td>
+      <td>${segTxt}</td>
       <td><span class="badge ${v.vendido?'danger':'ok'}">${v.vendido?'Vendido':'Activo'}</span></td>
     </tr>`;
   });
@@ -766,30 +800,24 @@ function renderVehiclePage() {
       <div class="info-item"><div class="lbl">Presión trasera</div><div class="val">${v.presionTras?v.presionTras+' bar':'—'}</div></div>
     </div></div></div>`;
 
-  html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Compra</h3></div><div class="sb-body">
+  // Compra/venta info shown inside the datos section compactly
+  html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Compra y venta</h3>
+    ${canEdit(v) && !v.vendido && isOwner(v) ? `<button class="btn small" onclick="openModal('venta','${v.id}')">+ Registrar venta</button>` : ''}
+    ${canEdit(v) ? `<button class="btn small" onclick="openModal('compraNota','${v.id}')">✎ Editar</button>` : ''}
+  </div><div class="sb-body">
     <div class="info-grid">
-      <div class="info-item"><div class="lbl">Fecha</div><div class="val">${fmtDate(v.fechaCompra)}</div></div>
+      <div class="info-item"><div class="lbl">Fecha compra</div><div class="val">${fmtDate(v.fechaCompra)}</div></div>
       <div class="info-item"><div class="lbl">KM al comprar</div><div class="val">${fmtKm(v.kmCompra)}</div></div>
-      <div class="info-item"><div class="lbl">Importe</div><div class="val">${fmtMoney(v.importeCompra)}</div></div>
+      <div class="info-item"><div class="lbl">Importe compra</div><div class="val">${fmtMoney(v.importeCompra)}</div></div>
       <div class="info-item"><div class="lbl">Vendedor</div><div class="val">${fmt(v.vendedor)}</div></div>
+      ${v.vendido ? `
+      <div class="info-item"><div class="lbl">Fecha venta</div><div class="val">${fmtDate(v.fechaVenta)}</div></div>
+      <div class="info-item"><div class="lbl">KM a la venta</div><div class="val">${fmtKm(v.kmVenta)}</div></div>
+      <div class="info-item"><div class="lbl">Comprador</div><div class="val">${fmt(v.comprador)}</div></div>` : ''}
     </div>
-    ${v.notasCompra?`<div style="margin-top:12px;padding:12px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2)">${v.notasCompra}</div>`:''}
+    ${v.notasCompra?`<div style="margin-top:10px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2)"><strong style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:0.8px">Notas compra</strong><br>${v.notasCompra}</div>`:''}
+    ${v.vendido && v.notasVenta?`<div style="margin-top:8px;padding:10px 12px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2)"><strong style="color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:0.8px">Notas venta</strong><br>${v.notasVenta}</div>`:''}
   </div></div>`;
-
-  if (v.vendido) {
-    html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Venta</h3></div><div class="sb-body">
-      <div class="info-grid">
-        <div class="info-item"><div class="lbl">Fecha venta</div><div class="val">${fmtDate(v.fechaVenta)}</div></div>
-        <div class="info-item"><div class="lbl">KM a la venta</div><div class="val">${fmtKm(v.kmVenta)}</div></div>
-        <div class="info-item"><div class="lbl">Comprador</div><div class="val">${fmt(v.comprador)}</div></div>
-      </div>
-      ${v.notasVenta?`<div style="margin-top:12px;padding:12px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2)">${v.notasVenta}</div>`:''}
-    </div></div>`;
-  } else {
-    html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◉</span> Venta</h3>
-      ${isOwner(v) ? `<button class="btn small" onclick="openModal('venta','${v.id}')">+ Registrar venta</button>` : ''}
-    </div><div class="sb-body"><div class="empty" style="padding:20px 0"><p>Vehículo no vendido todavía</p></div></div></div>`;
-  }
 
   html += renderShares(v) + renderSeguro(v) + renderTalleres(v) + renderITVs(v) + renderHistorial(v) + renderViajes(v);
   html += `</div>`;
@@ -883,9 +911,9 @@ function renderHistorial(v) {
   </div><div class="sb-body">`;
   if (!hs.length) html += `<div class="empty" style="padding:20px 0"><p>Sin anotaciones</p></div>`;
   else {
-    html += `<table class="hist-table"><thead><tr><th>Fecha</th><th>Nota</th><th></th></tr></thead><tbody>`;
+    html += `<table class="hist-table"><thead><tr><th>Fecha</th><th>KM</th><th>Nota</th><th></th></tr></thead><tbody>`;
     hs.forEach(h => {
-      html += `<tr><td class="date" style="width:110px">${fmtDate(h.fecha)}</td><td>${h.nota||'—'}</td>
+      html += `<tr><td class="date" style="width:110px">${fmtDate(h.fecha)}</td><td style="white-space:nowrap">${h.km?fmtKm(h.km):'—'}</td><td>${h.nota||'—'}</td>
         <td style="white-space:nowrap">
           ${canEditV_h ? `<button class="btn small" onclick="openModal('historial','${v.id}','${h.id}')">✎</button>
           <button class="btn small danger" onclick="deleteItem('historial','${v.id}','${h.id}')">✕</button>` : ''}
@@ -915,7 +943,8 @@ function renderViajes(v) {
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
                 <span class="date">${fmtDate(vj.fecha)}</span>
                 <strong style="font-size:14px">${fmt(vj.destino)}</strong>
-                ${vj.km ? `<span class="badge info">${fmtKm(vj.km)}</span>` : ''}
+                ${vj.kmSalida ? `<span class="badge info" title="KM salida">⬆ ${fmtKm(vj.kmSalida)}</span>` : ''}
+                ${vj.km ? `<span class="badge ok" title="KM recorridos">↔ ${fmtKm(vj.km)}</span>` : ''}
               </div>
               ${vj.descripcion ? `<div style="font-size:13px;color:var(--text2);margin-bottom:4px">${vj.descripcion}</div>` : ''}
               ${vj.notas ? `<div style="font-size:12px;color:var(--text3)">${vj.notas}</div>` : ''}
@@ -1158,13 +1187,13 @@ async function saveModal() {
     else v.itvs.push(obj);
   } else if (modalType==='historial' && v) {
     if (!v.historial) v.historial=[];
-    const obj={id:editId||uid(),fecha:val('h-fecha'),nota:val('h-nota')};
+    const obj={id:editId||uid(),fecha:val('h-fecha'),km:val('h-km'),nota:val('h-nota')};
     if (editId) { const idx=v.historial.findIndex(x=>x.id===editId); if(idx>=0) v.historial[idx]=obj; }
     else v.historial.push(obj);
   } else if (modalType==='viaje' && v) {
     if (!v.viajes) v.viajes=[];
-    const vjUrls = [0,1,2,3,4].map(i=>val('vj-url-'+i)).filter(u=>u.trim());
-    const obj={id:editId||uid(),fecha:val('vj-fecha'),destino:val('vj-destino'),descripcion:val('vj-descripcion'),km:val('vj-km'),notas:val('vj-notas'),urls:vjUrls};
+    const vjUrls = [0,1].map(i=>val('vj-url-'+i)).filter(u=>u.trim());
+    const obj={id:editId||uid(),fecha:val('vj-fecha'),kmSalida:val('vj-kmSalida'),destino:val('vj-destino'),km:val('vj-km'),descripcion:val('vj-descripcion'),notas:val('vj-notas'),urls:vjUrls};
     if (editId) { const idx=v.viajes.findIndex(x=>x.id===editId); if(idx>=0) v.viajes[idx]=obj; }
     else v.viajes.push(obj);
   } else if (modalType==='perfil') {
@@ -1286,27 +1315,26 @@ function buildITVForm(e) {
 
 function buildHistorialForm(e) {
   return `
-  <div class="form-row"><div class="form-group"><label>Fecha</label><input id="h-fecha" type="date" value="${e.fecha||today()}"></div></div>
+  <div class="form-row cols-2">
+    <div class="form-group"><label>Fecha</label><input id="h-fecha" type="date" value="${e.fecha||today()}"></div>
+    <div class="form-group"><label>KM en ese momento</label><input id="h-km" type="number" value="${e.km||''}"></div>
+  </div>
   <div class="form-row"><div class="form-group"><label>Nota / Descripción</label><textarea id="h-nota" style="min-height:100px">${e.nota||''}</textarea></div></div>`;
 }
 
 function buildViajeForm(e) {
-  const urls = e.urls || ['','','','',''];
-  const urlFields = urls.map((u,i) => `
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-      <div class="form-group" style="flex:1;margin:0">
-        <label style="margin-bottom:4px">Ruta ${i+1}</label>
-        <input id="vj-url-${i}" value="${u||''}" placeholder="https://maps.app.goo.gl/... o pega una URL de Google Maps">
-      </div>
-    </div>`).join('');
+  const urls = e.urls || [];
+  const url0 = urls[0] || '';
+  const url1 = urls[1] || '';
   return `
   <div class="form-row cols-2">
     <div class="form-group"><label>Fecha</label><input id="vj-fecha" type="date" value="${e.fecha||today()}"></div>
+    <div class="form-group"><label>KM a la salida</label><input id="vj-kmSalida" type="number" value="${e.kmSalida||''}" placeholder="12500"></div>
+  </div>
+  <div class="form-row cols-2">
+    <div class="form-group"><label>Destino</label><input id="vj-destino" value="${e.destino||''}" placeholder="Madrid, París…"></div>
     <div class="form-group"><label>KM realizados en el viaje</label><input id="vj-km" type="number" value="${e.km||''}" placeholder="450"></div>
   </div>
-  <div class="form-row"><div class="form-group">
-    <label>Destino</label><input id="vj-destino" value="${e.destino||''}" placeholder="Madrid, París…">
-  </div></div>
   <div class="form-row"><div class="form-group">
     <label>Descripción</label><input id="vj-descripcion" value="${e.descripcion||''}" placeholder="Viaje de trabajo, vacaciones…">
   </div></div>
@@ -1314,8 +1342,15 @@ function buildViajeForm(e) {
     <label>Notas</label><textarea id="vj-notas">${e.notas||''}</textarea>
   </div></div>
   <hr class="form-sep">
-  <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">URLs de Google Maps (hasta 5 rutas)</div>
-  ${urlFields}`;
+  <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px">URLs de Google Maps (hasta 2 rutas)</div>
+  <div class="form-group" style="margin-bottom:10px">
+    <label>Ruta 1</label>
+    <input id="vj-url-0" value="${url0}" placeholder="https://maps.app.goo.gl/…">
+  </div>
+  <div class="form-group">
+    <label>Ruta 2</label>
+    <input id="vj-url-1" value="${url1}" placeholder="https://maps.app.goo.gl/…">
+  </div>`;
 }
 
 function buildShareForm(v) {
@@ -1502,9 +1537,42 @@ async function generateInvite() {
     expiresAt: exp.toISOString().slice(0,10)
   });
   await saveDB();
-  // Refresh admin panel
   document.getElementById('modal-body').innerHTML = buildAdminPanel();
-  alert(`Código de invitación generado:\n\n${code}\n\nVálido 7 días. Compártelo con la persona que quieras invitar.`);
+
+  const appUrl = location.href;
+  const expDate = exp.toLocaleDateString('es-ES');
+  const msg = `¡Hola! Te invito a usar FlotaControl, una app para gestionar vehículos.
+
+Accede aquí: ${appUrl}
+
+Pulsa en "Registrarse" e introduce este código de invitación:
+
+🔑 ${code}
+
+El código caduca el ${expDate}.`;
+
+  try {
+    await navigator.clipboard.writeText(msg);
+    // Show toast
+    showToast('✓ Mensaje copiado al portapapeles — pégalo en WhatsApp');
+  } catch(e) {
+    // Fallback: show in a selectable textarea
+    prompt('Copia este mensaje y pégalo en WhatsApp:', msg);
+  }
+}
+
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4);transition:opacity 0.4s;font-family:DM Sans,sans-serif;white-space:nowrap';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.opacity = '0', 3000);
 }
 
 async function revokeInvite(code) {
