@@ -350,10 +350,20 @@ h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
 // ================================================================
 // CONFIG & STATE
 // ================================================================
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAtK16LjwZeTgKsMnnmUrZ0I82YOkmVSls",
+  authDomain: "flotacontrol-20fd9.firebaseapp.com",
+  databaseURL: "https://flotacontrol-20fd9-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "flotacontrol-20fd9",
+  storageBucket: "flotacontrol-20fd9.firebasestorage.app",
+  messagingSenderId: "261961571127",
+  appId: "1:261961571127:web:44e1f9aee0f20efa51d8b2"
+};
 const FIREBASE_URL = 'https://flotacontrol-20fd9-default-rtdb.europe-west1.firebasedatabase.app';
 const ADMIN_USER   = 'idlm2010';
 
 let dbReady = false;
+let firebaseToken = null;
 
 // Master data (todo en Drive)
 let DB = {
@@ -426,15 +436,49 @@ function setDriveStatus(ok, msg) {
   document.getElementById('drive-status-txt').textContent = msg;
 }
 
-async function loadDB() {
-  showLoading('Cargando datos…');
-  try {
-    const res = await fetch(FIREBASE_URL + '/db.json');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const raw = await res.json();
-    console.log('Firebase raw:', JSON.stringify(raw).slice(0, 300));
+async function getFirebaseToken() {
+  // Sign in anonymously via Firebase Auth REST API
+  const res = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key=${FIREBASE_CONFIG.apiKey}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ returnSecureToken: true }) }
+  );
+  if (!res.ok) throw new Error('Auth error: ' + res.status);
+  const data = await res.json();
+  firebaseToken = data.idToken;
+  // Refresh token before expiry (55 min)
+  setTimeout(refreshFirebaseToken, 55 * 60 * 1000);
+  return firebaseToken;
+}
 
-    // Firebase puede devolver arrays nativos o objetos con claves
+async function refreshFirebaseToken() {
+  try { await getFirebaseToken(); } catch(e) { console.warn('Token refresh failed:', e); }
+}
+
+async function dbFetch(path, method='GET', body=null) {
+  if (!firebaseToken) await getFirebaseToken();
+  const url = FIREBASE_URL + path + '?auth=' + firebaseToken;
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if (res.status === 401) {
+    // Token expired, refresh and retry once
+    await getFirebaseToken();
+    const res2 = await fetch(FIREBASE_URL + path + '?auth=' + firebaseToken, opts);
+    if (!res2.ok) throw new Error('HTTP ' + res2.status);
+    return res2.json();
+  }
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function loadDB() {
+  showLoading('Conectando…');
+  try {
+    setDriveStatus(false, 'Autenticando…');
+    await getFirebaseToken();
+    showLoading('Cargando datos…');
+    const raw = await dbFetch('/db.json');
+
     function toArray(val) {
       if (!val) return [];
       if (Array.isArray(val)) return val.filter(Boolean);
@@ -447,9 +491,8 @@ async function loadDB() {
       logs:        Array.isArray(raw && raw.logs) ? raw.logs : [],
       vehicles:    toArray(raw && raw.vehicles)
     };
-    console.log('DB loaded — users:', DB.users.length, 'vehicles:', DB.vehicles.length);
 
-    // First run: only create admin if truly empty (no users AND no vehicles)
+    // First run: only create admin if truly empty
     if (DB.users.length === 0 && DB.vehicles.length === 0) {
       const adminId = 'admin001';
       const passHash = await sha256('1234');
@@ -471,19 +514,13 @@ async function loadDB() {
 
 async function saveDB() {
   try {
-    // Convert arrays to objects for Firebase (Firebase doesn't support arrays natively)
     const payload = {
       users:       Object.fromEntries((DB.users||[]).map(u => [u.id, u])),
       invitations: Object.fromEntries((DB.invitations||[]).map(i => [i.code, i])),
       logs:        DB.logs || [],
       vehicles:    Object.fromEntries((DB.vehicles||[]).map(v => [v.id, v]))
     };
-    const res = await fetch(FIREBASE_URL + '/db.json', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    await dbFetch('/db.json', 'PUT', payload);
   } catch(e) { console.error('saveDB error:', e); }
 }
 
