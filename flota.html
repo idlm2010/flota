@@ -733,28 +733,70 @@ function renderDashboard() {
     const itvDays = itvVenc ? Math.round((new Date(itvVenc.vencimiento+'T12:00:00')-new Date())/(1000*60*60*24)) : null;
     const itvTxt = itvVenc ? `<span class="badge ${itvDays<0?'danger':itvDays<30?'danger':itvDays<90?'warn':'ok'}">${itvDays<0?'Vencida':fmtDate(itvVenc.vencimiento)}</span>` : '—';
 
-    // Next taller: revisionKm vs lastKm + estimated date
+    // Next taller: based on revisionKm, last known km, and km/year rate
     let tallerTxt = '—';
-    if (v.revisionKm && kmSources.length) {
-      const lastN = kmSources[0].km;
+    if (v.revisionKm) {
       const rev = Number(v.revisionKm);
-      const done = Math.floor(lastN/rev)*rev;
-      const next = done + rev;
-      const remain = next - lastN;
-      // Estimate date: calculate avg km/day from taller history
-      const talleresSorted = (v.talleres||[]).filter(t=>t.km&&t.fecha).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
-      let estDateTxt = '';
-      if (talleresSorted.length >= 2) {
-        const first = talleresSorted[0], last = talleresSorted[talleresSorted.length-1];
-        const days = (new Date(last.fecha)-new Date(first.fecha))/(1000*60*60*24);
-        const kmDay = days > 0 ? (Number(last.km)-Number(first.km))/days : 0;
-        if (kmDay > 0) {
-          const daysLeft = Math.round(remain/kmDay);
-          const estDate = new Date(); estDate.setDate(estDate.getDate()+daysLeft);
-          estDateTxt = ' · ' + estDate.toLocaleDateString('es-ES',{month:'short',year:'numeric'});
+
+      // Get last known km point (after fechaCompra) with its date
+      const fechaCompraLimit = v.fechaCompra ? new Date(v.fechaCompra+'T12:00:00') : new Date(0);
+      const allKmPts = [
+        ...(v.itvs||[]).map(x=>({km:Number(x.km)||0, d:new Date(x.fecha+'T12:00:00')})),
+        ...(v.talleres||[]).map(x=>({km:Number(x.km)||0, d:new Date(x.fecha+'T12:00:00')})),
+        ...(v.historial||[]).map(x=>({km:Number(x.km)||0, d:new Date(x.fecha+'T12:00:00')})),
+        ...(v.viajes||[]).map(x=>({km:Number(x.kmSalida)||0, d:new Date(x.fecha+'T12:00:00')})),
+      ].filter(p=>p.km>0 && p.d>=fechaCompraLimit).sort((a,b)=>b.d-a.d);
+
+      if (allKmPts.length > 0) {
+        const lastKnown = allKmPts[0]; // most recent km point with its date
+        const lastKm = lastKnown.km;
+        const lastDate = lastKnown.d;
+
+        // Next revision km: based on last TALLER km (not any km)
+        // This way: last taller @11000 + 6000 = next @17000, remain = 17000 - lastKnown(14000) = 3000
+        const fechaCompraLimit2 = v.fechaCompra ? new Date(v.fechaCompra+'T12:00:00') : new Date(0);
+        const tallerPts = (v.talleres||[])
+          .filter(t=>t.km&&t.fecha&&new Date(t.fecha+'T12:00:00')>=fechaCompraLimit2)
+          .map(t=>({km:Number(t.km),d:new Date(t.fecha+'T12:00:00')}))
+          .sort((a,b)=>b.d-a.d);
+        const lastTallerKm = tallerPts.length ? tallerPts[0].km : lastKm;
+        const done = Math.floor(lastTallerKm / rev) * rev;
+        const nextKm = done + rev;
+        const remain = nextKm - lastKm;
+
+        // Estimate date using km/year (already calculated above as wmKmDay)
+        // Recalculate kmDay for date estimation
+        const rawPts2 = allKmPts.slice().sort((a,b)=>a.d-b.d).reduce((acc,p)=>{
+          if(!acc.length||p.km>acc[acc.length-1].km) acc.push(p); return acc;
+        },[]);
+
+        let estDateTxt = '';
+        if (rawPts2.length >= 2) {
+          // Use weighted km/day from tramos (same logic as km/year)
+          const now2 = new Date();
+          let totalW2=0, wmKmDay2=0;
+          for (let i=1;i<rawPts2.length;i++){
+            const days=(rawPts2[i].d-rawPts2[i-1].d)/(1000*60*60*24);
+            const kmDay=(rawPts2[i].km-rawPts2[i-1].km)/days;
+            if(days>0&&kmDay>0){
+              const mid=new Date((rawPts2[i-1].d.getTime()+rawPts2[i].d.getTime())/2);
+              const ageY=(now2-mid)/(1000*60*60*24*365.25);
+              const w=Math.exp(-0.35*ageY)*days;
+              totalW2+=w; wmKmDay2+=kmDay*w;
+            }
+          }
+          if (totalW2>0) {
+            const kmDay = wmKmDay2/totalW2;
+            const daysLeft = Math.round(remain/kmDay);
+            const estDate = new Date(lastDate.getTime());
+            estDate.setDate(estDate.getDate()+daysLeft);
+            estDateTxt = ' · ' + estDate.toLocaleDateString('es-ES',{month:'short',year:'numeric'});
+          }
         }
+
+        const color = remain<500?'danger':remain<(rev*0.2)?'warn':'info';
+        tallerTxt = `<span class="badge ${color}">en ${fmtKm(remain)}${estDateTxt}</span>`;
       }
-      tallerTxt = `<span class="badge ${remain<500?'danger':remain<2000?'warn':'info'}">en ${fmtKm(remain)}${estDateTxt}</span>`;
     }
 
     // Seguro vencimiento
