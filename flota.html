@@ -436,46 +436,67 @@ function setDriveStatus(ok, msg) {
   document.getElementById('drive-status-txt').textContent = msg;
 }
 
-async function getFirebaseToken() {
-  // Sign in anonymously via Firebase Auth REST API
-  const res = await fetch(
-    `https://identitytoolkit.googleapis.com/v1/accounts:signInAnonymously?key=${FIREBASE_CONFIG.apiKey}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ returnSecureToken: true }) }
-  );
-  if (!res.ok) throw new Error('Auth error: ' + res.status);
-  const data = await res.json();
-  firebaseToken = data.idToken;
-  // Refresh token before expiry (55 min)
-  setTimeout(refreshFirebaseToken, 55 * 60 * 1000);
-  return firebaseToken;
-}
+// Firebase SDK loaded dynamically
+let firebaseApp = null;
+let firebaseAuth = null;
+let firebaseDB = null;
 
-async function refreshFirebaseToken() {
-  try { await getFirebaseToken(); } catch(e) { console.warn('Token refresh failed:', e); }
+async function initFirebaseSDK() {
+  // Load Firebase SDK modules
+  const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+  const { getAuth, signInAnonymously, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+
+  firebaseApp  = initializeApp(FIREBASE_CONFIG);
+  firebaseAuth = getAuth(firebaseApp);
+
+  return new Promise((resolve, reject) => {
+    const unsub = onAuthStateChanged(firebaseAuth, async user => {
+      unsub();
+      if (user) {
+        firebaseToken = await user.getIdToken();
+        // Auto-refresh every 55 min
+        setInterval(async () => {
+          try { firebaseToken = await user.getIdToken(true); } catch(e) {}
+        }, 55 * 60 * 1000);
+        resolve();
+      } else {
+        try {
+          const cred = await signInAnonymously(firebaseAuth);
+          firebaseToken = await cred.user.getIdToken();
+          resolve();
+        } catch(e) { reject(e); }
+      }
+    });
+  });
 }
 
 async function dbFetch(path, method='GET', body=null) {
-  if (!firebaseToken) await getFirebaseToken();
+  if (!firebaseToken) throw new Error('No auth token');
   const url = FIREBASE_URL + path + '?auth=' + firebaseToken;
   const opts = { method, headers: { 'Content-Type': 'application/json' } };
   if (body) opts.body = JSON.stringify(body);
   const res = await fetch(url, opts);
   if (res.status === 401) {
-    // Token expired, refresh and retry once
-    await getFirebaseToken();
+    // Try refreshing token once
+    try {
+      const user = firebaseAuth.currentUser;
+      if (user) firebaseToken = await user.getIdToken(true);
+    } catch(e) {}
     const res2 = await fetch(FIREBASE_URL + path + '?auth=' + firebaseToken, opts);
     if (!res2.ok) throw new Error('HTTP ' + res2.status);
-    return res2.json();
+    const txt2 = await res2.text();
+    return txt2 ? JSON.parse(txt2) : null;
   }
   if (!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
+  const txt = await res.text();
+  return txt ? JSON.parse(txt) : null;
 }
 
 async function loadDB() {
   showLoading('Conectando…');
   try {
     setDriveStatus(false, 'Autenticando…');
-    await getFirebaseToken();
+    await initFirebaseSDK();
     showLoading('Cargando datos…');
     const raw = await dbFetch('/db.json');
 
