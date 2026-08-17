@@ -818,8 +818,10 @@ function renderDashboard() {
           .map(t=>({km:Number(t.km),d:new Date(t.fecha+'T12:00:00')}))
           .sort((a,b)=>b.d-a.d);
         const lastTallerKm = tallerPts.length ? tallerPts[0].km : lastKm;
-        const done = Math.floor(lastTallerKm / rev) * rev;
-        const nextKm = done + rev;
+        // Base = max(kmCompra, lastTallerKm) — the starting point of the current cycle
+        const kmCompraNum = Number(v.kmCompra) || 0;
+        const base = Math.max(kmCompraNum, lastTallerKm);
+        const nextKm = base + rev;
         const remain = nextKm - lastKm;
 
         // Estimate date using km/year (already calculated above as wmKmDay)
