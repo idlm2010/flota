@@ -787,10 +787,14 @@ function renderDashboard() {
           }
           if (totalW2>0) {
             const kmDay = wmKmDay2/totalW2;
+            // Days left calculated from TODAY (not from lastDate)
             const daysLeft = Math.round(remain/kmDay);
-            const estDate = new Date(lastDate.getTime());
+            const estDate = new Date();
             estDate.setDate(estDate.getDate()+daysLeft);
-            estDateTxt = ' · ' + estDate.toLocaleDateString('es-ES',{month:'short',year:'numeric'});
+            // Never show a past date
+            if (estDate > new Date()) {
+              estDateTxt = ' · ' + estDate.toLocaleDateString('es-ES',{month:'short',year:'numeric'});
+            }
           }
         }
 
