@@ -201,15 +201,101 @@ h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
 .spinner { width: 36px; height: 36px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-@media (max-width: 640px) {
-  #sidebar { width: 200px; }
-  .form-row.cols-2, .form-row.cols-3 { grid-template-columns: 1fr; }
-  .page-header { flex-direction: column; }
-  .content-body { padding: 16px; }
+/* ── MOBILE NAV BAR ── */
+#mobile-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
+  background: var(--bg2); border-top: 1px solid var(--border);
+  padding: 6px 0 max(6px, env(safe-area-inset-bottom));
+  grid-template-columns: repeat(4, 1fr);
 }
+.mob-nav-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 4px; border: none; background: none;
+  color: var(--text3); font-family: 'DM Sans'; font-size: 10px;
+  cursor: pointer; transition: color 0.15s; min-height: 44px; justify-content: center;
+}
+.mob-nav-btn .mn-icon { font-size: 20px; line-height: 1; }
+.mob-nav-btn.active { color: var(--accent); }
+.mob-nav-btn.primary-mob { color: var(--accent); }
+
+/* ── MOBILE MODAL AS BOTTOM SHEET ── */
+@media (max-width: 600px) {
+  #modal-overlay {
+    padding: 0; align-items: flex-end;
+  }
+  .modal {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 92vh; display: flex; flex-direction: column;
+    max-width: 100%;
+  }
+  .modal-body {
+    overflow-y: auto; flex: 1;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .modal-header { padding: 16px 16px 12px; }
+  .modal-footer { padding: 12px 16px; padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 640px) {
+  .form-row.cols-2, .form-row.cols-3 { grid-template-columns: 1fr; }
+  .page-header { flex-direction: column; gap: 10px; padding: 16px; }
+  .page-header h2 { font-size: 18px; }
+  .content-body { padding: 12px; }
+  .sb-body { padding: 12px; }
+  .sb-header { padding: 12px 14px; flex-wrap: wrap; gap: 8px; }
+  .info-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+  .dash-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stat-card { padding: 12px 14px; }
+  .stat-card .sc-val { font-size: 20px; }
+  .login-box { padding: 24px 18px; }
+  .sub-item { grid-template-columns: 1fr 64px 88px 32px; gap: 6px; }
+  .sub-item-header { grid-template-columns: 1fr 64px 88px 32px; gap: 6px; }
+  .btn.small { padding: 8px 12px; font-size: 12px; min-height: 36px; }
+  .btn { min-height: 40px; }
+  .user-dropdown { right: 4px; }
+  #topbar .tagline { display: none; }
+  #topbar h1 { font-size: 16px; }
+  #uc-name { display: none; }
+}
+
 @media (max-width: 480px) {
   #sidebar { display: none; }
   #app { flex-direction: column; }
+  #main { padding-bottom: 64px; }
+  #mobile-nav { display: grid; }
+
+  /* Inputs larger for touch */
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 12px 14px;
+    font-size: 16px; /* prevents iOS zoom */
+    min-height: 44px;
+  }
+  .form-group select { min-height: 44px; }
+
+  /* Table → card layout for dashboard */
+  .mob-table-card { display: block; }
+  .mob-table-hide { display: none; }
+
+  /* Section blocks */
+  .section-block { border-radius: 10px; margin-bottom: 12px; }
+
+  /* Action buttons in tables — bigger tap targets */
+  .hist-table td .btn.small {
+    min-height: 36px; min-width: 36px;
+    padding: 6px 10px;
+  }
+
+  /* Login */
+  #login-screen { padding: 12px; align-items: flex-end; }
+  .login-box {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    padding: 24px 16px max(24px, env(safe-area-inset-bottom));
+    max-height: 95vh; overflow-y: auto;
+  }
 }
 </style>
 </head>
@@ -332,6 +418,22 @@ h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 700; }
 </div>
 
 <!-- MODAL -->
+<!-- MOBILE BOTTOM NAV -->
+<div id="mobile-nav">
+  <button class="mob-nav-btn active" id="mob-nav-dashboard" onclick="showPage('dashboard');setMobNav('dashboard')">
+    <span class="mn-icon">◈</span><span>Panel</span>
+  </button>
+  <button class="mob-nav-btn" id="mob-nav-vehiculos" onclick="showMobVehiculos()">
+    <span class="mn-icon">🚗</span><span>Vehículos</span>
+  </button>
+  <button class="mob-nav-btn primary-mob" onclick="openModal('vehiculo')">
+    <span class="mn-icon" style="font-size:26px;color:var(--accent)">＋</span><span>Añadir</span>
+  </button>
+  <button class="mob-nav-btn" id="mob-nav-buscar" onclick="showPage('buscar');setMobNav('buscar')">
+    <span class="mn-icon">◎</span><span>Buscar</span>
+  </button>
+</div>
+
 <div id="modal-overlay">
   <div class="modal" id="modal-box">
     <div class="modal-header">
@@ -771,11 +873,42 @@ function renderDashboard() {
     html += `<div class="itv-warning">⚠ <strong>${v.marca} ${v.modelo}</strong> (${v.matricula||'—'}) — ${last?'Última ITV: '+fmtDate(last.fecha):'Sin ITV registrada'}. Revisa si necesita ITV.</div>`;
   });
 
+  // Mobile: cards; Desktop: table
+  const isMobile = window.innerWidth <= 480;
+  if (isMobile) {
+    html += `<div style="display:flex;flex-direction:column;gap:10px">`;
+    veh.forEach(v => {
+      const kmSources2 = [
+        ...(v.itvs||[]).map(x=>({km:Number(x.km)||0,fecha:x.fecha})),
+        ...(v.talleres||[]).map(x=>({km:Number(x.km)||0,fecha:x.fecha})),
+        ...(v.historial||[]).map(x=>({km:Number(x.km)||0,fecha:x.fecha})),
+        ...(v.viajes||[]).map(x=>({km:Number(x.kmSalida)||0,fecha:x.fecha}))
+      ].filter(x=>x.km>0).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+      const lkm = kmSources2.length ? fmtKm(kmSources2[0].km) : '—';
+      html += `<div onclick="currentVehicleId='${v.id}';renderAll();showPage('vehiculo');setMobNav('vehiculos')"
+        style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+          <div>
+            <div style="font-weight:700;font-size:16px">${v.marca} ${v.modelo}</div>
+            <div style="font-family:'Syne';letter-spacing:1px;font-size:12px;color:var(--accent);margin-top:2px">${v.matricula||'—'}</div>
+          </div>
+          <span class="badge ${v.vendido?'danger':'ok'}">${v.vendido?'Vendido':'Activo'}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+          <div><span style="color:var(--text3)">Últimos KM</span><br><strong>${lkm}</strong></div>
+          <div><span style="color:var(--text3)">Tipo</span><br><strong>${fmt(v.tipo)}</strong></div>
+        </div>
+        <div style="margin-top:6px;font-size:11px;color:var(--text3)">› Ver ficha completa</div>
+      </div>`;
+    });
+    html += `</div>`;
+  } else {
   html += `<div class="section-block"><div class="sb-header"><h3><span class="sb-icon">◈</span> Vehículos</h3></div><div class="sb-body">
-    <table class="hist-table"><thead><tr>
+    <div style="overflow-x:auto"><table class="hist-table"><thead><tr>
       <th>Vehículo</th><th>Matrícula</th><th>Tipo</th><th>Últimos KM</th>
       <th>KM/año</th><th>Próx. ITV</th><th>Próx. taller</th><th>Neumáticos</th><th>Vence seguro</th><th>Estado</th>
     </tr></thead><tbody>`;
+  }
   veh.forEach(v => {
     // Last km registered across all sources
     const kmSources = [
@@ -962,7 +1095,7 @@ function renderDashboard() {
       <td><span class="badge ${v.vendido?'danger':'ok'}">${v.vendido?'Vendido':'Activo'}</span></td>
     </tr>`;
   });
-  html += `</tbody></table></div></div></div>`;
+  if (!isMobile) html += `</tbody></table></div></div></div></div>`; }
   pg.innerHTML = html;
 }
 
@@ -1046,7 +1179,7 @@ function renderTalleres(v) {
   </div><div class="sb-body">`;
   if (!ts.length) { html += `<div class="empty" style="padding:20px 0"><p>Sin entradas de taller</p></div>`; }
   else {
-    html += `<table class="hist-table"><thead><tr><th>Fecha</th><th>Taller</th><th>KM</th><th>Importe</th><th>Descripción</th><th></th></tr></thead><tbody>`;
+    html += `<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Fecha</th><th>Taller</th><th>KM</th><th>Importe</th><th>Descripción</th><th></th></tr></thead><tbody>`;
     ts.forEach(t => {
       const detHtml = (t.items||[]).map(it=>`<div style="display:flex;gap:12px;font-size:12px;padding:3px 0;border-bottom:1px solid var(--border)">
         <span style="flex:1">${it.concepto}</span><span style="color:var(--text3)">${it.cantidad}</span>
@@ -1060,7 +1193,7 @@ function renderTalleres(v) {
         </td></tr>`;
       if (t.items&&t.items.length) html += `<tr><td colspan="6" style="padding:0 0 12px 0"><div style="background:var(--bg3);border-radius:8px;padding:12px;margin-top:-4px">${detHtml}</div></td></tr>`;
     });
-    html += `</tbody></table>`;
+    html += `</tbody></table></div>`;
   }
   return html+'</div></div>';
 }
@@ -1073,7 +1206,7 @@ function renderITVs(v) {
   </div><div class="sb-body">`;
   if (!its.length) html += `<div class="empty" style="padding:20px 0"><p>Sin ITV registradas</p></div>`;
   else {
-    html += `<table class="hist-table"><thead><tr><th>Fecha ITV</th><th>Vencimiento</th><th>Lugar</th><th>KM</th><th>Importe</th><th>Observaciones</th><th></th></tr></thead><tbody>`;
+    html += `<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Fecha ITV</th><th>Vencimiento</th><th>Lugar</th><th>KM</th><th>Importe</th><th>Observaciones</th><th></th></tr></thead><tbody>`;
     its.forEach(it => {
       const exp = it.vencimiento ? new Date(it.vencimiento+'T12:00:00') : null;
       const dl = exp ? Math.round((exp - new Date())/(1000*60*60*24)) : null;
@@ -1092,7 +1225,7 @@ function renderITVs(v) {
           <button class="btn small danger" onclick="deleteItem('itvs','${v.id}','${it.id}')">✕</button>` : ''}
         </td></tr>`;
     });
-    html += `</tbody></table>`;
+    html += `</tbody></table></div>`;
   }
   return html+'</div></div>';
 }
@@ -1105,7 +1238,7 @@ function renderHistorial(v) {
   </div><div class="sb-body">`;
   if (!hs.length) html += `<div class="empty" style="padding:20px 0"><p>Sin anotaciones</p></div>`;
   else {
-    html += `<table class="hist-table"><thead><tr><th>Fecha</th><th>KM</th><th>Nota</th><th></th></tr></thead><tbody>`;
+    html += `<div style="overflow-x:auto"><table class="hist-table"><thead><tr><th>Fecha</th><th>KM</th><th>Nota</th><th></th></tr></thead><tbody>`;
     hs.forEach(h => {
       html += `<tr><td class="date" style="width:110px">${fmtDate(h.fecha)}</td><td style="white-space:nowrap">${h.km?fmtKm(h.km):'—'}</td><td>${h.nota||'—'}</td>
         <td style="white-space:nowrap">
@@ -1253,7 +1386,7 @@ function renderShares(v) {
   if (!shares.length) {
     html += `<div class="empty" style="padding:16px 0"><p>Este vehículo no está compartido con nadie</p></div>`;
   } else {
-    html += `<table class="hist-table"><thead><tr>
+    html += `<div style="overflow-x:auto"><table class="hist-table"><thead><tr>
       <th>Usuario</th><th>Nombre</th><th>Permiso</th><th></th>
     </tr></thead><tbody>`;
     shares.forEach(s => {
@@ -1271,7 +1404,7 @@ function renderShares(v) {
         <td><button class="btn small danger" onclick="revokeShare('${v.id}','${s.userId}')">Revocar</button></td>
       </tr>`;
     });
-    html += `</tbody></table>`;
+    html += `</tbody></table></div>`;
   }
   return html + '</div></div>';
 }
@@ -1912,6 +2045,42 @@ function renderSubItems() {
 // ================================================================
 // INIT
 // ================================================================
+function setMobNav(page) {
+  document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('mob-nav-' + page);
+  if (btn) btn.classList.add('active');
+}
+
+function showMobVehiculos() {
+  setMobNav('vehiculos');
+  // Show vehicle picker as modal on mobile
+  const isMob = window.innerWidth <= 480;
+  if (!isMob) { showPage('dashboard'); return; }
+  const veh = myVehicles();
+  const overlay = document.getElementById('modal-overlay');
+  document.getElementById('modal-title').textContent = 'Mis vehículos';
+  document.getElementById('modal-save-btn').style.display = 'none';
+  document.getElementById('modal-body').innerHTML = veh.length
+    ? veh.map(v => `<div onclick="selectMobVehicle('${v.id}')" style="padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-weight:600;font-size:15px">${v.marca} ${v.modelo}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">${v.matricula||'—'} · <span style="color:${v.vendido?'var(--red)':'var(--green)'}">${v.vendido?'Vendido':'Activo'}</span></div>
+        </div>
+        <span style="color:var(--text3)">›</span>
+      </div>`).join('')
+    : '<div class="empty"><p>No tienes vehículos todavía</p></div>';
+  overlay.classList.add('open');
+  modalType = '_mob_vehicle_picker';
+}
+
+function selectMobVehicle(id) {
+  currentVehicleId = id;
+  closeModal();
+  renderAll();
+  showPage('vehiculo');
+  setMobNav('vehiculos');
+}
+
 window.onload = function() {
   loadDB();
 };
