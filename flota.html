@@ -1094,7 +1094,7 @@ function renderDashboard() {
       <td><span class="badge ${v.vendido?'danger':'ok'}">${v.vendido?'Vendido':'Activo'}</span></td>
     </tr>`;
   });
-  if (!isMobile) html += `</tbody></table></div></div></div></div>`; }
+  if (!isMobile) html += `</tbody></table></div></div></div></div>`;
   pg.innerHTML = html;
 }
 
