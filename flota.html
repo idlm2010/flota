@@ -898,6 +898,76 @@ function renderDashboard() {
       const segDays = segV ? Math.round((new Date(segV+'T12:00:00')-new Date())/(1000*60*60*24)) : null;
       const segTxtM = segV ? `<span class="badge ${segDays<0?'danger':segDays<30?'danger':segDays<90?'warn':'ok'}" style="font-size:11px">${segDays<0?'Seguro vencido':'Seg. '+fmtDate(segV)}</span>` : '';
 
+      // KM/year for mobile card
+      let kmYearMob = '—';
+      (function() {
+        const raw2 = [
+          ...(v.itvs||[]).map(x=>({km:Number(x.km)||0,d:new Date(x.fecha+'T12:00:00')})),
+          ...(v.talleres||[]).map(x=>({km:Number(x.km)||0,d:new Date(x.fecha+'T12:00:00')})),
+          ...(v.historial||[]).map(x=>({km:Number(x.km)||0,d:new Date(x.fecha+'T12:00:00')})),
+          ...(v.viajes||[]).map(x=>({km:Number(x.kmSalida)||0,d:new Date(x.fecha+'T12:00:00')})),
+        ].filter(p=>p.km>0&&p.d>=fechaCompraLimit);
+        const pts2=raw2.sort((a,b)=>a.d-b.d).reduce((acc,p)=>{if(!acc.length||p.km>acc[acc.length-1].km)acc.push(p);return acc;},[]);
+        if(pts2.length<2) return;
+        const now=new Date();let tw=0,wk=0;
+        for(let i=1;i<pts2.length;i++){
+          const days=(pts2[i].d-pts2[i-1].d)/(1000*60*60*24);
+          const kd=(pts2[i].km-pts2[i-1].km)/days;
+          if(days>0&&kd>0){
+            const mid=new Date((pts2[i-1].d.getTime()+pts2[i].d.getTime())/2);
+            const w=Math.exp(-0.35*(now-mid)/(1000*60*60*24*365.25))*days;
+            tw+=w;wk+=kd*w;
+          }
+        }
+        if(tw>0){
+          const lastAge=(new Date()-pts2[pts2.length-1].d)/(1000*60*60*24);
+          kmYearMob=Math.round(wk/tw*365.25).toLocaleString('es-ES')+' km/año'+(lastAge>180?'*':'');
+        }
+      })();
+
+      // Next taller for mobile card
+      let tallerMob = '—';
+      if (v.revisionKm) {
+        const rev2=Number(v.revisionKm);
+        const allKmM=[
+          ...(v.itvs||[]).map(x=>({km:Number(x.km)||0,d:new Date(x.fecha+'T12:00:00')})),
+          ...(v.talleres||[]).map(x=>({km:Number(x.km)||0,d:new Date(x.fecha+'T12:00:00')})),
+          ...(v.historial||[]).map(x=>({km:Number(x.km)||0,d:new Date(x.fecha+'T12:00:00')})),
+          ...(v.viajes||[]).map(x=>({km:Number(x.kmSalida)||0,d:new Date(x.fecha+'T12:00:00')})),
+        ].filter(p=>p.km>0&&p.d>=fechaCompraLimit).sort((a,b)=>b.d-a.d);
+        if(allKmM.length>0){
+          const lastKmM=allKmM[0].km;
+          const tallerM=(v.talleres||[]).filter(t=>t.km&&t.fecha&&new Date(t.fecha+'T12:00:00')>=fechaCompraLimit).map(t=>({km:Number(t.km),d:new Date(t.fecha+'T12:00:00')})).sort((a,b)=>b.d-a.d);
+          const lastTM=tallerM.length?tallerM[0].km:Number(v.kmCompra)||0;
+          const baseM=Math.max(Number(v.kmCompra)||0,lastTM);
+          const nextKmM=baseM+rev2;
+          const remainM=nextKmM-lastKmM;
+          const ptsM=allKmM.slice().sort((a,b)=>a.d-b.d).reduce((acc,p)=>{if(!acc.length||p.km>acc[acc.length-1].km)acc.push(p);return acc;},[]);
+          let estM='';
+          if(ptsM.length>=2){
+            const now2=new Date();let tw2=0,wk2=0;
+            for(let i=1;i<ptsM.length;i++){
+              const d=(ptsM[i].d-ptsM[i-1].d)/(1000*60*60*24);
+              const k=(ptsM[i].km-ptsM[i-1].km)/d;
+              if(d>0&&k>0){const mid=new Date((ptsM[i-1].d.getTime()+ptsM[i].d.getTime())/2);const w=Math.exp(-0.35*(now2-mid)/(1000*60*60*24*365.25))*d;tw2+=w;wk2+=k*w;}
+            }
+            if(tw2>0){const kd=wk2/tw2;const dl=Math.round(remainM/kd);const ed=new Date();ed.setDate(ed.getDate()+dl);if(ed>now2)estM=' · '+ed.toLocaleDateString('es-ES',{month:'short',year:'numeric'});}
+          }
+          const colorM=remainM<500?'danger':remainM<(rev2*0.2)?'warn':'info';
+          tallerMob=`<span class="badge ${colorM}" style="font-size:11px">en ${fmtKm(remainM)}${estM}</span>`;
+        }
+      }
+
+      // Tyres for mobile card
+      let neuMob='';
+      const lastKmMob=kmSources2.length?kmSources2[0].km:0;
+      if(lastKmMob>0){
+        const neuI=[];
+        if(v.neuDelKmMontaje&&v.neuDelVida){const p=Math.min(100,Math.round(((lastKmMob-Number(v.neuDelKmMontaje))/Number(v.neuDelVida))*100));neuI.push({label:'Del',pct:p,remain:(Number(v.neuDelKmMontaje)+Number(v.neuDelVida))-lastKmMob});}
+        if(v.neuTrasKmMontaje&&v.neuTrasVida){const p=Math.min(100,Math.round(((lastKmMob-Number(v.neuTrasKmMontaje))/Number(v.neuTrasVida))*100));neuI.push({label:'Tras',pct:p,remain:(Number(v.neuTrasKmMontaje)+Number(v.neuTrasVida))-lastKmMob});}
+        if(neuI.length){const w=neuI.sort((a,b)=>b.pct-a.pct)[0];const bc=w.pct>=90?'danger':w.pct>=70?'warn':'ok';neuMob=`<span class="badge ${bc}" style="font-size:11px">Neum. ${w.pct}%${w.remain<0?' ⚠':''}</span>`;}
+      }
+
       html += `<div onclick="currentVehicleId='${v.id}';renderAll();showPage('vehiculo');setMobNav('vehiculos')"
         style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
@@ -909,10 +979,15 @@ function renderDashboard() {
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
           <div style="font-size:13px"><span style="font-size:11px;color:var(--text3);display:block">Últimos KM</span><strong>${lkm}</strong></div>
-          <div style="font-size:13px"><span style="font-size:11px;color:var(--text3);display:block">Seguro</span>${segTxtM||'<span style="color:var(--text3)">—</span>'}</div>
+          <div style="font-size:13px"><span style="font-size:11px;color:var(--text3);display:block">KM/año</span><span style="font-size:12px">${kmYearMob}</span></div>
         </div>
-        ${itvTxtM ? `<div style="margin-bottom:8px">${itvTxtM}</div>` : ''}
-        <div style="font-size:11px;color:var(--text3);margin-top:4px">› Ver ficha completa</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px">
+          ${itvTxtM}
+          ${segTxtM}
+          ${tallerMob !== '—' ? tallerMob : ''}
+          ${neuMob}
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">› Ver ficha completa</div>
       </div>`;
     });
     html += `</div>`;
