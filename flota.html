@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FlotaControl — Gestión de vehículos</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <style>
 :root {
   --bg: #0f0f0f; --bg2: #161616; --bg3: #1e1e1e; --bg4: #272727;
@@ -538,32 +540,28 @@ function setDriveStatus(ok, msg) {
   document.getElementById('drive-status-txt').textContent = msg;
 }
 
-// Firebase SDK loaded dynamically
+// Firebase SDK (compat version loaded via <script> tags)
 let firebaseApp = null;
 let firebaseAuth = null;
-let firebaseDB = null;
 
 async function initFirebaseSDK() {
-  // Load Firebase SDK modules
-  const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-  const { getAuth, signInAnonymously, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-
-  firebaseApp  = initializeApp(FIREBASE_CONFIG);
-  firebaseAuth = getAuth(firebaseApp);
+  if (!firebaseApp) {
+    firebaseApp  = firebase.initializeApp(FIREBASE_CONFIG);
+    firebaseAuth = firebase.auth();
+  }
 
   return new Promise((resolve, reject) => {
-    const unsub = onAuthStateChanged(firebaseAuth, async user => {
+    const unsub = firebaseAuth.onAuthStateChanged(async user => {
       unsub();
       if (user) {
         firebaseToken = await user.getIdToken();
-        // Auto-refresh every 55 min
         setInterval(async () => {
-          try { firebaseToken = await user.getIdToken(true); } catch(e) {}
+          try { firebaseToken = await firebaseAuth.currentUser.getIdToken(true); } catch(e) {} 
         }, 55 * 60 * 1000);
         resolve();
       } else {
         try {
-          const cred = await signInAnonymously(firebaseAuth);
+          const cred = await firebaseAuth.signInAnonymously();
           firebaseToken = await cred.user.getIdToken();
           resolve();
         } catch(e) { reject(e); }
@@ -581,8 +579,9 @@ async function dbFetch(path, method='GET', body=null) {
   if (res.status === 401) {
     // Try refreshing token once
     try {
-      const user = firebaseAuth.currentUser;
-      if (user) firebaseToken = await user.getIdToken(true);
+      if (firebaseAuth && firebaseAuth.currentUser) {
+        firebaseToken = await firebaseAuth.currentUser.getIdToken(true);
+      }
     } catch(e) {}
     const res2 = await fetch(FIREBASE_URL + path + '?auth=' + firebaseToken, opts);
     if (!res2.ok) throw new Error('HTTP ' + res2.status);
